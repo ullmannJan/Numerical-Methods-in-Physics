@@ -48,10 +48,10 @@ md"""
 # ╔═╡ 3f83093b-efa5-4439-b095-41021e1d07d5
 function root_lin_interpol(func, a, b, eps=1e-14)
 	@assert a < b "a !< b"
-	new = 1
+	new = 10
 	count = 0
-	while func(new) > eps || count > 1e4
-		count++
+	while func(new) > eps && count > 1e2
+		count = count + 1
 		new = b-func(b)*(b-a)/(func(b)-func(a))
 		if func(new)*func(a) > 0
 			a = new
