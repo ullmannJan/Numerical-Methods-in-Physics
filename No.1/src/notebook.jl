@@ -19,7 +19,7 @@ end
 
 # ╔═╡ b3f4dcc5-457a-4470-8379-e671f971f92e
 md"""
-## I.1
+## I.1 Bisection (Bolzano's) Method
 """
 
 # ╔═╡ e908fa4f-79eb-4103-8721-6cfd29f4d9d5
@@ -42,7 +42,7 @@ root_bisection(f, -1e10, 1e10)
 
 # ╔═╡ a200ccd6-e480-4a0b-b22a-3d18a43edb9c
 md"""
-## I.2
+## I.2 Linear Interpolation
 """
 
 # ╔═╡ 3f83093b-efa5-4439-b095-41021e1d07d5
@@ -67,7 +67,7 @@ root_lin_interpol(f, -1e2, 1e2)
 
 # ╔═╡ 9ef444b4-6cbe-4b2f-8645-38882b69cfc8
 md"""
-## I.3
+## I.3 Newton-Raphson Method
 """
 
 # ╔═╡ 710377e9-300a-40d1-bebf-20373bff0781
@@ -81,7 +81,7 @@ root_newton_raphson(f,0)
 
 # ╔═╡ e80cf7f5-81ff-42aa-99ca-85938710155a
 md"""
-## I.4
+## I.4 Convergence of Methods
 """
 
 # ╔═╡ 894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
@@ -89,7 +89,7 @@ md"""
 
 # ╔═╡ 920ce066-c813-4bfc-ae66-88c2b1376fd5
 md"""
-## I.5
+## I.5 Robustness of Methods
 """
 
 # ╔═╡ 6e5a85ea-13a5-4f35-85d4-678b06c27217
@@ -100,6 +100,11 @@ x = 1:10; y = rand(10); # These are the plotting data
 
 # ╔═╡ 0b74c7a2-ebbe-4a92-8537-101a44877e11
 plot(x,y)
+
+# ╔═╡ 59c07029-d062-41f4-8c08-1599b6aeef67
+md"""
+# Problem II
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1054,5 +1059,6 @@ version = "1.4.1+0"
 # ╠═6e5a85ea-13a5-4f35-85d4-678b06c27217
 # ╠═7a290026-bc3f-4928-8b79-a0a610b74cda
 # ╠═0b74c7a2-ebbe-4a92-8537-101a44877e11
+# ╟─59c07029-d062-41f4-8c08-1599b6aeef67
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
