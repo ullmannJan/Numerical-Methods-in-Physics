@@ -71,7 +71,13 @@ md"""
 """
 
 # ╔═╡ 710377e9-300a-40d1-bebf-20373bff0781
+function root_newton_raphson(func, a, eps=1e-14)
+	new = 0
+	return new
+end
 
+# ╔═╡ c9c02973-dfb2-4296-a960-7404bf9c56ef
+root_newton_raphson(f,0)
 
 # ╔═╡ e80cf7f5-81ff-42aa-99ca-85938710155a
 md"""
@@ -1041,6 +1047,7 @@ version = "1.4.1+0"
 # ╠═e7805354-3e10-407c-a55d-c66d18d9f2bc
 # ╟─9ef444b4-6cbe-4b2f-8645-38882b69cfc8
 # ╠═710377e9-300a-40d1-bebf-20373bff0781
+# ╠═c9c02973-dfb2-4296-a960-7404bf9c56ef
 # ╟─e80cf7f5-81ff-42aa-99ca-85938710155a
 # ╠═894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
 # ╟─920ce066-c813-4bfc-ae66-88c2b1376fd5
