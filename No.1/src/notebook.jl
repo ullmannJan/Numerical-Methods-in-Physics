@@ -72,12 +72,20 @@ md"""
 
 # ╔═╡ 710377e9-300a-40d1-bebf-20373bff0781
 function root_newton_raphson(func, a, eps=1e-14)
-	new = 0
+	eps_prime = eps/4
+	dx = eps_prime
+	new = a+1
+	while (abs(a-new) > eps && abs(func(new)) > eps_prime)
+		f = func(a)
+		f_prime = (func(a+dx)-func(a-dx)) /2 /dx
+		new = a
+		a = a - f/f_prime
+	end
 	return new
 end
 
 # ╔═╡ c9c02973-dfb2-4296-a960-7404bf9c56ef
-root_newton_raphson(f,0)
+root_newton_raphson(f,1)
 
 # ╔═╡ e80cf7f5-81ff-42aa-99ca-85938710155a
 md"""
@@ -85,7 +93,7 @@ md"""
 """
 
 # ╔═╡ 894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
-
+8>>1
 
 # ╔═╡ 920ce066-c813-4bfc-ae66-88c2b1376fd5
 md"""
@@ -104,7 +112,48 @@ plot(x,y)
 # ╔═╡ 59c07029-d062-41f4-8c08-1599b6aeef67
 md"""
 # Problem II
+
+First, we want to identify the the analytical solution. Our equation is
+
+$$y'' + \lambda y = 0$$
+$$y(0) = 0 \text{ and } y(1) = y'(1)$$
+
+We can easily solve this by determining the characteristical polynomial. 
+
+$$x^2 + \lambda^2 = (x-i\lambda)*(x+i\lambda) = 0$$
+
+Thus, our solution is with $A,B \in \mathbb{R}$
+
+$$y(x) = Ae^{i\lambda x} + Be^{-i\lambda x}$$
+
+Initial Conditions lead to
+
+$$A+B = 0 \Rightarrow y(x) = A\left( e^{i\lambda x}-e^{-i\lambda x}\right) = 2iA\sin(\lambda x)$$
+
+The second condition results in
+
+$$A \sin(\lambda) = A \lambda \cos(\lambda) \Rightarrow \lambda = \tan(\lambda) \vee A = 0$$
+
+This leads to
+
+$$\begin{cases}
+\lambda \in \mathbb{C} &\text{for } A = 0\\
+\lambda = \tan(\lambda) &\text{for } A \in \mathbb{R}\\
+\end{cases}$$ 
+
+Let's solve this equation with our already implemented routines
 """
+
+# ╔═╡ e94327a8-7441-438f-abce-d0c2361f607d
+function g(x)
+	return tan(x)-x
+end
+
+# ╔═╡ 28e3c27d-b473-43cd-9624-ce9c1b70d94c
+root_newton_raphson(g, 0)
+
+# ╔═╡ 845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
+root_bisection(g, 0.1, 10)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1059,6 +1108,9 @@ version = "1.4.1+0"
 # ╠═6e5a85ea-13a5-4f35-85d4-678b06c27217
 # ╠═7a290026-bc3f-4928-8b79-a0a610b74cda
 # ╠═0b74c7a2-ebbe-4a92-8537-101a44877e11
-# ╟─59c07029-d062-41f4-8c08-1599b6aeef67
+# ╠═59c07029-d062-41f4-8c08-1599b6aeef67
+# ╠═e94327a8-7441-438f-abce-d0c2361f607d
+# ╠═28e3c27d-b473-43cd-9624-ce9c1b70d94c
+# ╠═845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
