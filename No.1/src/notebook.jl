@@ -14,7 +14,7 @@ md"""
 
 # ╔═╡ 327ad8a3-e4ee-467e-a720-140f2df5a339
 function f(x)
-	return exp(sqrt(5)*x) - 13.5*cos(0.1*x)+25*x^4
+	return exp(sqrt(5)*x) - 13.5*cos(0.1*x) + 25*x^4
 end
 
 # ╔═╡ b3f4dcc5-457a-4470-8379-e671f971f92e
@@ -26,7 +26,9 @@ md"""
 function root_bisection(func, a, b, eps=1e-14)
 	@assert a < b "a !< b"
 	mid = 0
+	iterations = 0
 	while b-a > eps
+		iterations += 1
 		mid = (a+b)/2
 		if func(mid)*func(a) > 0
 			a = mid
@@ -34,7 +36,7 @@ function root_bisection(func, a, b, eps=1e-14)
 			b = mid
 		end
 	end
-    return mid
+    return mid, iterations
 end
 
 # ╔═╡ 439daf68-0628-41f9-a834-ccf7447a0e76
@@ -48,10 +50,10 @@ md"""
 # ╔═╡ 3f83093b-efa5-4439-b095-41021e1d07d5
 function root_lin_interpol(func, a, b, eps=1e-14)
 	@assert a < b "a !< b"
-	new = 10
-	count = 0
-	while func(new) > eps && count > 1e2
-		count = count + 1
+	new = 0
+	iterations = 0
+	while abs(func(new)) > eps && iterations < 1e2
+		iterations += 1
 		new = b-func(b)*(b-a)/(func(b)-func(a))
 		if func(new)*func(a) > 0
 			a = new
@@ -59,11 +61,11 @@ function root_lin_interpol(func, a, b, eps=1e-14)
 			b = new
 		end
 	end
-    return new
+    return new, iterations
 end
 
 # ╔═╡ e7805354-3e10-407c-a55d-c66d18d9f2bc
-root_lin_interpol(f, -1e2, 1e2)
+root_lin_interpol(f, 0, 1)
 
 # ╔═╡ 9ef444b4-6cbe-4b2f-8645-38882b69cfc8
 md"""
@@ -75,13 +77,15 @@ function root_newton_raphson(func, a, eps=1e-14)
 	eps_prime = eps/4
 	dx = eps_prime
 	new = a+1
+	iterations = 0
 	while (abs(a-new) > eps && abs(func(new)) > eps_prime)
+		iterations += 1
 		f = func(a)
 		f_prime = (func(a+dx)-func(a-dx)) /2 /dx
 		new = a
 		a = a - f/f_prime
 	end
-	return new
+	return new, iterations
 end
 
 # ╔═╡ c9c02973-dfb2-4296-a960-7404bf9c56ef
@@ -92,8 +96,35 @@ md"""
 ## I.4 Convergence of Methods
 """
 
+# ╔═╡ da4a0719-d3ca-46ba-b5e3-aee86c09e860
+# find machine precision
+begin
+	prec = 1
+	while 1+prec != 1
+		prec /= 2
+	end
+	print(prec)
+end
+
 # ╔═╡ 894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
-8>>1
+accuracies = exp10.(range(-1, step=-1, length=15))
+
+# ╔═╡ 1d48b8b2-986a-4bef-8193-1b2e41ea364b
+#gather data
+res = [[root_bisection(f,-1e2,1e2,acc)[2] for acc in accuracies],
+[root_lin_interpol(f,-1e2,1e2,acc)[2] for acc in accuracies],
+[root_bisection(f,-1e2,1e2,acc)[2] for acc in accuracies]]
+
+# ╔═╡ 763a1579-4b85-4e39-b13a-5063c870ca70
+begin
+	#plot results
+	p = plot(accuracies, res, xaxis=:log, title="Comparison of convergence", label=["Bisection" "Linear Interpolation" "Newton"])
+	xlabel!(p, "Accuracy")
+	ylabel!(p, "Iterations")
+end
+
+# ╔═╡ 9eee3006-8b32-401e-a221-f6106ea6c73d
+
 
 # ╔═╡ 920ce066-c813-4bfc-ae66-88c2b1376fd5
 md"""
@@ -118,7 +149,7 @@ First, we want to identify the the analytical solution. Our equation is
 $$y'' + \lambda y = 0$$
 $$y(0) = 0 \text{ and } y(1) = y'(1)$$
 
-We can easily solve this by determining the characteristical polynomial. 
+We can easily solve this by determining the characteristic polynomial. 
 
 $$x^2 + \lambda^2 = (x-i\lambda)*(x+i\lambda) = 0$$
 
@@ -1103,12 +1134,16 @@ version = "1.4.1+0"
 # ╠═710377e9-300a-40d1-bebf-20373bff0781
 # ╠═c9c02973-dfb2-4296-a960-7404bf9c56ef
 # ╟─e80cf7f5-81ff-42aa-99ca-85938710155a
+# ╠═da4a0719-d3ca-46ba-b5e3-aee86c09e860
 # ╠═894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
+# ╠═1d48b8b2-986a-4bef-8193-1b2e41ea364b
+# ╠═763a1579-4b85-4e39-b13a-5063c870ca70
+# ╠═9eee3006-8b32-401e-a221-f6106ea6c73d
 # ╟─920ce066-c813-4bfc-ae66-88c2b1376fd5
 # ╠═6e5a85ea-13a5-4f35-85d4-678b06c27217
 # ╠═7a290026-bc3f-4928-8b79-a0a610b74cda
 # ╠═0b74c7a2-ebbe-4a92-8537-101a44877e11
-# ╠═59c07029-d062-41f4-8c08-1599b6aeef67
+# ╟─59c07029-d062-41f4-8c08-1599b6aeef67
 # ╠═e94327a8-7441-438f-abce-d0c2361f607d
 # ╠═28e3c27d-b473-43cd-9624-ce9c1b70d94c
 # ╠═845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
