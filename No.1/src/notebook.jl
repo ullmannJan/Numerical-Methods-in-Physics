@@ -17,17 +17,34 @@ function f(x)
 	return exp(sqrt(5)*x) - 13.5*cos(0.1*x) + 25*x^4
 end
 
+# ╔═╡ 3f235695-c1d8-40e7-b478-503a108bdbf1
+function f_prime(x)
+	return sqrt(5)*exp(sqrt(5)*x) + 1.35*sin(0.1*x) + 100*x^3
+end
+
+# ╔═╡ 2c2ee3d9-16c3-4848-a586-f4dc360104ea
+begin
+	plot(f, -1.5,1.5, label="f(x)", gridalpha=0.3)
+	plot!(x -> 0, label="0", color="black")
+	xlabel!("x")
+	title!("Function f")
+end
+
 # ╔═╡ b3f4dcc5-457a-4470-8379-e671f971f92e
 md"""
 ## I.1 Bisection (Bolzano's) Method
 """
 
 # ╔═╡ e908fa4f-79eb-4103-8721-6cfd29f4d9d5
-function root_bisection(func, a, b, eps=1e-14)
-	@assert a < b "a !< b"
+function root_bisection(func::Function, a::Number, b::Number; eps::Number=1e-14, iter_max::Int=100)
+	if a > b  
+		stor = a
+		a = b
+		b = stor
+	end
 	mid = 0
 	iterations = 0
-	while b-a > eps
+	while b-a > eps && iterations < iter_max
 		iterations += 1
 		mid = (a+b)/2
 		if func(mid)*func(a) > 0
@@ -39,8 +56,13 @@ function root_bisection(func, a, b, eps=1e-14)
     return mid, iterations
 end
 
-# ╔═╡ 439daf68-0628-41f9-a834-ccf7447a0e76
-root_bisection(f, -1e10, 1e10)
+# ╔═╡ 5f18f082-22ad-4d7a-b80b-7c9f5d92d4f1
+#search positive root
+root_bisection(f,0, 1)
+
+# ╔═╡ ce757f3e-4bfa-4b51-a224-bf82ba065516
+#search negative root
+root_bisection(f,-1,0)
 
 # ╔═╡ a200ccd6-e480-4a0b-b22a-3d18a43edb9c
 md"""
@@ -48,11 +70,15 @@ md"""
 """
 
 # ╔═╡ 3f83093b-efa5-4439-b095-41021e1d07d5
-function root_lin_interpol(func, a, b, eps=1e-14)
-	@assert a < b "a !< b"
+function root_lin_interpol(func::Function, a::Number, b::Number; eps::Number=1e-14, iter_max::Int=100)
+	if a > b  
+		stor = a
+		a = b
+		b = stor
+	end
 	new = 0
 	iterations = 0
-	while abs(func(new)) > eps && iterations < 1e2
+	while abs(func(a)) > eps && iterations < iter_max
 		iterations += 1
 		new = b-func(b)*(b-a)/(func(b)-func(a))
 		if func(new)*func(a) > 0
@@ -65,80 +91,206 @@ function root_lin_interpol(func, a, b, eps=1e-14)
 end
 
 # ╔═╡ e7805354-3e10-407c-a55d-c66d18d9f2bc
+#positive root
 root_lin_interpol(f, 0, 1)
+
+# ╔═╡ 186da2cf-b6bc-49f1-b948-6ee207015a30
+#negative root
+root_lin_interpol(f,-1,0)
 
 # ╔═╡ 9ef444b4-6cbe-4b2f-8645-38882b69cfc8
 md"""
 ## I.3 Newton-Raphson Method
 """
 
-# ╔═╡ 710377e9-300a-40d1-bebf-20373bff0781
-function root_newton_raphson(func, a, eps=1e-14)
-	eps_prime = eps/4
-	dx = eps_prime
-	new = a+1
+# ╔═╡ 778bb868-13e2-4ad6-b619-ee36999316b7
+function root_newton_raphson(func::Function, a::Number; eps::Number=1e-14, iter_max::Int=100)
+	dx = eps/2
+	old = a+1
 	iterations = 0
-	while (abs(a-new) > eps && abs(func(new)) > eps_prime)
+	while abs(a-old) > eps && iterations < iter_max
 		iterations += 1
 		f = func(a)
 		f_prime = (func(a+dx)-func(a-dx)) /2 /dx
-		new = a
+		old = a
 		a = a - f/f_prime
 	end
-	return new, iterations
+	return a, iterations
 end
 
-# ╔═╡ c9c02973-dfb2-4296-a960-7404bf9c56ef
+# ╔═╡ 4b2e5963-49af-4d71-aa07-8fcaaac9ee24
+function root_newton_raphson(func::Function, func_prime::Function, a::Number; eps::Number=1e-14, iter_max::Int=100) 
+	dx = eps/4
+	old = a+1
+	iterations = 0
+	while abs(func(old)) > eps && iterations < iter_max
+		iterations += 1
+		old = a
+		a = a - func(a)/func_prime(a)
+	end
+	return a, iterations
+end
+
+# ╔═╡ 9c1a7501-5b33-44b5-a4d7-ab18900eb9b5
+#positive root
 root_newton_raphson(f,1)
+
+# ╔═╡ 7820392a-4277-4b90-ac64-d571b7f93b7a
+#negative root
+root_newton_raphson(f,-1)
+
+# ╔═╡ c4d13507-69c1-44d4-ab92-5e6a7d0b3363
+# positive root
+root_newton_raphson(f, f_prime, 1)
+
+# ╔═╡ 16b22e2d-ea89-4863-96d8-68cdb2b91562
+# negative root
+root_newton_raphson(f,f_prime,-1)
 
 # ╔═╡ e80cf7f5-81ff-42aa-99ca-85938710155a
 md"""
 ## I.4 Convergence of Methods
 """
 
-# ╔═╡ da4a0719-d3ca-46ba-b5e3-aee86c09e860
-# find machine precision
-begin
-	prec = 1
-	while 1+prec != 1
-		prec /= 2
-	end
-	print(prec)
+# ╔═╡ daff81de-420f-4507-a492-e72eaffed156
+#convergence pattern 
+begin 
+	iterations = 0:20
+	v_bis = [root_bisection(f,0,1,iter_max = it)[1] for it in iterations]
+	v_lin = [root_lin_interpol(f,0,1,iter_max = it)[1] for it in iterations]
+	v_new = [root_newton_raphson(f,1,iter_max = it)[1] for it in iterations]
+	v_new2 = [root_newton_raphson(f,f_prime,1,iter_max = it)[1] for it in iterations]
 end
 
-# ╔═╡ 894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
-accuracies = exp10.(range(-1, step=-1, length=15))
-
-# ╔═╡ 1d48b8b2-986a-4bef-8193-1b2e41ea364b
-#gather data
-res = [[root_bisection(f,-1e2,1e2,acc)[2] for acc in accuracies],
-[root_lin_interpol(f,-1e2,1e2,acc)[2] for acc in accuracies],
-[root_bisection(f,-1e2,1e2,acc)[2] for acc in accuracies]]
-
-# ╔═╡ 763a1579-4b85-4e39-b13a-5063c870ca70
+# ╔═╡ d41befc1-98eb-4d3d-b7cc-cbf429c83afe
 begin
 	#plot results
-	p = plot(accuracies, res, xaxis=:log, title="Comparison of convergence", label=["Bisection" "Linear Interpolation" "Newton"])
-	xlabel!(p, "Accuracy")
-	ylabel!(p, "Iterations")
+	plot(iterations, v_bis, title="Iterations by accuracy", label="Bisection", gridalpha=0.3)
+	plot!(v_lin, label="Linear Interpolation")
+	plot!(v_new, label="Newton")
+	plot!(v_new2, label="Newton with analytical deriv")
+	ylabel!("value")
+	xlabel!("Iterations")
 end
 
-# ╔═╡ 9eee3006-8b32-401e-a221-f6106ea6c73d
-
+# ╔═╡ 927f8241-b63a-41a3-a6ea-994c5ec92332
+md"""
+We can see that the Newton method converges fastest and the Bisection and Linear interpolation method perform about equally well. All converge under 15 iteration. We have, however chosen good initial guesses in this example
+"""
 
 # ╔═╡ 920ce066-c813-4bfc-ae66-88c2b1376fd5
 md"""
 ## I.5 Robustness of Methods
+
+We will check for the effect of initial conditions, as well as the effect of different precisions. First, we will check the machine precision
 """
 
-# ╔═╡ 6e5a85ea-13a5-4f35-85d4-678b06c27217
+# ╔═╡ c5c917f8-b255-484f-9b55-2cbe70b6b8cd
+#Machineprecision
+eps()
 
+# ╔═╡ 004511bb-2cf1-4098-973c-0207cbbb32a3
+md"""
+### Initial Guesses
 
-# ╔═╡ 7a290026-bc3f-4928-8b79-a0a610b74cda
-x = 1:10; y = rand(10); # These are the plotting data
+Initial guesses for roots are very important. The Bolzano (Bisection) assumes that the root is in the given interval. Furthermore, all methods perform better when the root is close by.
+"""
 
-# ╔═╡ 0b74c7a2-ebbe-4a92-8537-101a44877e11
-plot(x,y)
+# ╔═╡ 6c219d64-2a3e-4b17-be01-fa6b80d3dd2e
+begin
+	starts = -50:0.1:50
+	res = [
+		[root_newton_raphson(f,f_prime, start, iter_max=Int(1e4))[1] for start in starts]
+	]
+	p2 = plot(starts, res, title="Root finding for different starting values")
+	xlabel!(p2, "x")
+	ylabel!(p2, "root")
+end
+
+# ╔═╡ 2f74516b-1efe-4f47-ae87-e9c8e5a4bc46
+md"""
+We can see that the Newton method is very accurate and reliablely finds the closest root. Even for big distances this works find
+
+We will now look at the performance of the bisection and linear interpolation methods. The following diagrams show which initial guesses result in which root. 
+
+**Here is a little legend**
+
+- Green = positive root
+- Blue = negative root
+- Black = no root
+"""
+
+# ╔═╡ 1d27ae1b-a040-4e31-94c2-83d29844d5f5
+begin
+	x, y = -4:0.1:4, -4:0.1:4 
+	function bolz(x,y) 
+		root = root_bisection(f,x,y)
+		if 0.75 < root[1] < 0.76
+			return 1
+		elseif -0.86 < root[1] < -0.85
+			return -1
+		else
+			return 0
+		end
+	end
+	heatmap(x,y, bolz.(x,y'), c=cgrad([:turquoise, :black ,:green]))
+	xlabel!("initial guess 1")
+	ylabel!("initial guess 2")
+	title!("Identification of roots with bisection method")
+end
+
+# ╔═╡ 4591b855-2149-445b-91a3-a3400db076c9
+begin
+	function lin(x,y) 
+		root = root_lin_interpol(f,x,y)
+		if 0.75 < root[1] < 0.76
+			return 1
+		elseif -0.86 < root[1] < -0.85
+			return -1
+		else
+			return 0
+		end
+	end
+	heatmap(x,y, lin.(x,y'), c=cgrad([:turquoise, :black ,:green]))
+	xlabel!("initial guess 1")
+	ylabel!("initial guess 2")
+	title!("Linear Interpolation")
+end
+
+# ╔═╡ 261c732f-c60a-41b3-b3b7-c93e0b5af316
+md"""
+We can see that the diagonal never yields a root. This is meaningful, as we have an interval $(x,x)$ which of course does not include a root. Further more we can see that the bisection method can only search inside of its given interval, whereas the linear interpolation method can also find the root outside of its starting domain.
+
+### Tolerances
+
+We will look how the methods perform with increasing accuracy. 
+"""
+
+# ╔═╡ 20c4e56d-8df8-4c4d-bf0b-40f21a0f7f86
+#define data for convergence
+begin
+	accuracies = exp10.(range(-1, -19, length=1000))
+	res_bi = [root_bisection(f,-1,1,eps=acc)[2] for acc in accuracies]
+	res_lin = [root_lin_interpol(f,-1,1,eps=acc)[2] for acc in accuracies]
+	#res_new = [root_newton_raphson(f,1,eps=acc)[2] for acc in accuracies]
+	res_new_2 = [root_newton_raphson(f,f_prime,1,eps=acc)[2] for acc in accuracies]
+end
+
+# ╔═╡ 763a1579-4b85-4e39-b13a-5063c870ca70
+begin
+	#plot results
+	p1 = plot(accuracies, res_bi, xaxis=:log, title="Iterations by accuracy", label="Bisection", gridalpha=0.3)
+	plot!(p1, accuracies, res_lin, label="Linear Interpolation")
+	#plot!(p1, accuracies, res_new, label="Newton")
+	plot!(p1, accuracies, res_new_2, label="Newton with analytical deriv")
+	xlabel!(p1, "Accuracy")
+	ylabel!(p1, "Iterations")
+end
+
+# ╔═╡ d828f038-214a-4b41-a9a6-73479a33ae33
+md"""
+Here we can examine how the bisection method is clearly the slowest one to converge. This gets more dramatic with higher accuracy. Close second is the Linear Interpolation method. The Newton Raphson Method performs the best in this scenario. We can also identify the machine epsilon. There methods do not converge for accuracies higher then $10^{-16}$. The Newton and Linear Interpolation method do not even reach that accuracy because they just check the function value and not the x-values. Thus, they get even worse best accuracies.
+"""
 
 # ╔═╡ 59c07029-d062-41f4-8c08-1599b6aeef67
 md"""
@@ -176,15 +328,36 @@ Let's solve this equation with our already implemented routines
 """
 
 # ╔═╡ e94327a8-7441-438f-abce-d0c2361f607d
-function g(x)
-	return tan(x)-x
-end
+g(x) = tan(x)-x
+
+# ╔═╡ 7a3bd2a5-c90c-42e1-83dd-9d6f1ddfb44a
+g_prime(x) = 1/cos(x)^2-1
 
 # ╔═╡ 28e3c27d-b473-43cd-9624-ce9c1b70d94c
-root_newton_raphson(g, 0)
+root_newton_raphson(g, g_prime, 1)
+
+# ╔═╡ 70f0350f-641e-48ab-b75f-25f2fae59285
+root_bisection(g, -0.5,0.7, eps=1e-17)
+
+# ╔═╡ 01cbe231-4b02-4f1f-965e-7ca1d64a3738
+md"""
+We can see that the solution for x=0 is not exact. This has to do with the definition of the tangent which equals the identity function for small values. This means that for 
+
+$$|x| < 10^{-8}: \tan(x) = x$$ 
+
+And therefore the algorithm will find a value close to $0$ where the condition is already fullfilled
+"""
+
+# ╔═╡ 7ca074ae-4196-48d8-ae80-4046558dac3c
+plot(g,0,3e-8, ylim=(-1e-23,1e-23), title="g(x)", label="g",xlabel="x")
 
 # ╔═╡ 845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
-root_bisection(g, 0.1, 10)
+#positive root
+root_bisection(g, 0, 10)
+
+# ╔═╡ e4e91243-aa97-4bac-89a4-0df5bdde54bb
+#negative root
+root_bisection(g, -10,-0.1)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1124,28 +1297,46 @@ version = "1.4.1+0"
 # ╟─4691646a-6829-444a-bee8-1bcfe85ca86e
 # ╠═d2795860-56c4-11ed-0f78-153cee3d6014
 # ╠═327ad8a3-e4ee-467e-a720-140f2df5a339
+# ╠═3f235695-c1d8-40e7-b478-503a108bdbf1
+# ╠═2c2ee3d9-16c3-4848-a586-f4dc360104ea
 # ╟─b3f4dcc5-457a-4470-8379-e671f971f92e
 # ╠═e908fa4f-79eb-4103-8721-6cfd29f4d9d5
-# ╠═439daf68-0628-41f9-a834-ccf7447a0e76
+# ╠═5f18f082-22ad-4d7a-b80b-7c9f5d92d4f1
+# ╠═ce757f3e-4bfa-4b51-a224-bf82ba065516
 # ╟─a200ccd6-e480-4a0b-b22a-3d18a43edb9c
 # ╠═3f83093b-efa5-4439-b095-41021e1d07d5
 # ╠═e7805354-3e10-407c-a55d-c66d18d9f2bc
+# ╠═186da2cf-b6bc-49f1-b948-6ee207015a30
 # ╟─9ef444b4-6cbe-4b2f-8645-38882b69cfc8
-# ╠═710377e9-300a-40d1-bebf-20373bff0781
-# ╠═c9c02973-dfb2-4296-a960-7404bf9c56ef
+# ╠═778bb868-13e2-4ad6-b619-ee36999316b7
+# ╠═9c1a7501-5b33-44b5-a4d7-ab18900eb9b5
+# ╠═7820392a-4277-4b90-ac64-d571b7f93b7a
+# ╠═4b2e5963-49af-4d71-aa07-8fcaaac9ee24
+# ╠═c4d13507-69c1-44d4-ab92-5e6a7d0b3363
+# ╠═16b22e2d-ea89-4863-96d8-68cdb2b91562
 # ╟─e80cf7f5-81ff-42aa-99ca-85938710155a
-# ╠═da4a0719-d3ca-46ba-b5e3-aee86c09e860
-# ╠═894cfc5c-5ef2-45a1-9beb-cbe9a1083de7
-# ╠═1d48b8b2-986a-4bef-8193-1b2e41ea364b
-# ╠═763a1579-4b85-4e39-b13a-5063c870ca70
-# ╠═9eee3006-8b32-401e-a221-f6106ea6c73d
+# ╠═daff81de-420f-4507-a492-e72eaffed156
+# ╠═d41befc1-98eb-4d3d-b7cc-cbf429c83afe
+# ╟─927f8241-b63a-41a3-a6ea-994c5ec92332
 # ╟─920ce066-c813-4bfc-ae66-88c2b1376fd5
-# ╠═6e5a85ea-13a5-4f35-85d4-678b06c27217
-# ╠═7a290026-bc3f-4928-8b79-a0a610b74cda
-# ╠═0b74c7a2-ebbe-4a92-8537-101a44877e11
+# ╠═c5c917f8-b255-484f-9b55-2cbe70b6b8cd
+# ╟─004511bb-2cf1-4098-973c-0207cbbb32a3
+# ╠═6c219d64-2a3e-4b17-be01-fa6b80d3dd2e
+# ╟─2f74516b-1efe-4f47-ae87-e9c8e5a4bc46
+# ╠═1d27ae1b-a040-4e31-94c2-83d29844d5f5
+# ╠═4591b855-2149-445b-91a3-a3400db076c9
+# ╟─261c732f-c60a-41b3-b3b7-c93e0b5af316
+# ╠═20c4e56d-8df8-4c4d-bf0b-40f21a0f7f86
+# ╠═763a1579-4b85-4e39-b13a-5063c870ca70
+# ╟─d828f038-214a-4b41-a9a6-73479a33ae33
 # ╟─59c07029-d062-41f4-8c08-1599b6aeef67
 # ╠═e94327a8-7441-438f-abce-d0c2361f607d
+# ╠═7a3bd2a5-c90c-42e1-83dd-9d6f1ddfb44a
 # ╠═28e3c27d-b473-43cd-9624-ce9c1b70d94c
+# ╠═70f0350f-641e-48ab-b75f-25f2fae59285
+# ╟─01cbe231-4b02-4f1f-965e-7ca1d64a3738
+# ╠═7ca074ae-4196-48d8-ae80-4046558dac3c
 # ╠═845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
+# ╠═e4e91243-aa97-4bac-89a4-0df5bdde54bb
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
