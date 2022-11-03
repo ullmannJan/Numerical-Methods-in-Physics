@@ -193,7 +193,7 @@ eps()
 md"""
 ### Initial Guesses
 
-Initial guesses for roots are very important. The Bolzano (Bisection) assumes that the root is in the given interval. Furthermore, all methods perform better when the root is close by.
+Initial guesses for roots are very important. The Bolzano (Bisection) assumes that the root is in the given interval. Furthermore, all methods perform better when the root is close by. We will take a look at the performance of the Newton Raphson Method for different starting values.
 """
 
 # ╔═╡ 6c219d64-2a3e-4b17-be01-fa6b80d3dd2e
@@ -259,7 +259,7 @@ end
 
 # ╔═╡ 261c732f-c60a-41b3-b3b7-c93e0b5af316
 md"""
-We can see that the diagonal never yields a root. This is meaningful, as we have an interval $(x,x)$ which of course does not include a root. Further more we can see that the bisection method can only search inside of its given interval, whereas the linear interpolation method can also find the root outside of its starting domain.
+We can see that the diagonal never yields a root. This is sensible, as we have an interval $(x,x)$ which of course does not include a root. Further more we can see that the bisection method can only search inside of its given interval, whereas the linear interpolation method can also find the root outside of its starting domain.
 
 ### Tolerances
 
@@ -289,7 +289,7 @@ end
 
 # ╔═╡ d828f038-214a-4b41-a9a6-73479a33ae33
 md"""
-Here we can examine how the bisection method is clearly the slowest one to converge. This gets more dramatic with higher accuracy. Close second is the Linear Interpolation method. The Newton Raphson Method performs the best in this scenario. We can also identify the machine epsilon. There methods do not converge for accuracies higher then $10^{-16}$. The Newton and Linear Interpolation method do not even reach that accuracy because they just check the function value and not the x-values. Thus, they get even worse best accuracies.
+Here we can examine how the bisection method is clearly the slowest one to converge. This gets more dramatic with higher accuracy. Close second is the Linear Interpolation method. The Newton Raphson Method performs the best in this scenario. We can also identify the machine epsilon. The methods do not converge for accuracies higher then $10^{-16}$. The Newton and Linear Interpolation method do not even reach that accuracy because they just check the function value and not the x-values for a certain accuracy. Thus, they get even worse maximal accuracies.
 """
 
 # ╔═╡ 59c07029-d062-41f4-8c08-1599b6aeef67
@@ -345,14 +345,18 @@ We can see that the solution for x=0 is not exact. This has to do with the defin
 
 $$|x| < 10^{-8}: \tan(x) = x$$ 
 
-And therefore the algorithm will find a value close to $0$ where the condition is already fullfilled
+And therefore the algorithm will find a value close to $0$ where the condition is already fullfilled. See also picture beneath.
 """
 
 # ╔═╡ 7ca074ae-4196-48d8-ae80-4046558dac3c
 plot(g,0,3e-8, ylim=(-1e-23,1e-23), title="g(x)", label="g",xlabel="x")
 
-# ╔═╡ 845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
+# ╔═╡ c55a26c6-590d-43bd-a87e-a84a2ca17bb0
 #positive root
+root_bisection(g, 0.11,10)
+
+# ╔═╡ 845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
+#0
 root_bisection(g, 0, 10)
 
 # ╔═╡ e4e91243-aa97-4bac-89a4-0df5bdde54bb
@@ -1336,6 +1340,7 @@ version = "1.4.1+0"
 # ╠═70f0350f-641e-48ab-b75f-25f2fae59285
 # ╟─01cbe231-4b02-4f1f-965e-7ca1d64a3738
 # ╠═7ca074ae-4196-48d8-ae80-4046558dac3c
+# ╠═c55a26c6-590d-43bd-a87e-a84a2ca17bb0
 # ╠═845eab8c-5b85-4449-a9bc-4d8b6aeac7a3
 # ╠═e4e91243-aa97-4bac-89a4-0df5bdde54bb
 # ╟─00000000-0000-0000-0000-000000000001
