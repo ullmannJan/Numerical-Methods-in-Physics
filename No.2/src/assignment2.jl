@@ -10,6 +10,9 @@ using Plots
 # ╔═╡ c3433106-6356-46e4-afb7-50d60359664d
 using LaTeXStrings
 
+# ╔═╡ 4e62fd49-0fed-461d-929d-e5e8e272cbc9
+using LinearAlgebra
+
 # ╔═╡ 75dce97d-c97b-49c6-8b56-637a89a0a513
 md"""
 # Assignment #2
@@ -31,16 +34,50 @@ md"""
 ### Generalized Newton Method
 """
 
+# ╔═╡ a21a7d67-bb35-4f5d-982b-8d7495bfaa74
+function root_newton_gen(init, funcs::Function...; eps::Number=1e-9, iter_max::Int=200)
+	@assert length(init) == length(funcs) "initial conditions do not match number of functions"
+	return 0
+end
+
 # ╔═╡ 10d9b9aa-6839-4129-8897-c5c40770e8ac
-#blabla
+root_newton_gen([0.,2], f1, f2)
 
 # ╔═╡ cbb8932b-da00-4b4e-a7d6-049b3b3836ca
 md"""
 ### Improved $x = g(x)$
 """
 
+# ╔═╡ 34cb1d15-3812-4759-aa51-76f82fd0f515
+x(y) = 0.1/y
+
+# ╔═╡ c9881a5f-b263-4ad8-a08d-df6ce60fca12
+y(x) = sqrt((2 - x*x)/3)
+
 # ╔═╡ 358abc7e-214e-46c1-9177-aea8118e949f
-#blabla
+function root_iter_gen(testfunc::Function, init, funcs::Function...; eps::Number=1e-9, iter_max::Int=200)
+	@assert length(init) == length(funcs) "initial conditions do not match number of functions"
+	iterations=0
+	
+	while norm(testfunc(init...),1) > eps && iter_max > iterations 
+		println(norm(init))
+		iterations += 1
+		for i ∈ 1:length(init)
+			init[i] = funcs[i](deleteat!(copy(init), i)...)
+		end
+	end
+	
+	return init, iterations
+end
+
+# ╔═╡ c0a530c6-171c-458a-99dd-66dcda5c9288
+res = root_iter_gen(f1,[1.,1.], x, y, eps=1e-15)
+
+# ╔═╡ 7549c0cb-6ec6-4ca1-9ba6-6a3229b16726
+f1(res[1]...)
+
+# ╔═╡ 91e61288-6e9b-46c0-ae70-639f8147c45c
+f2(res[1]...)
 
 # ╔═╡ a90fb744-6307-4b07-b268-43d974927bcf
 md"""
@@ -110,6 +147,7 @@ end
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [compat]
@@ -123,7 +161,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "77554bf9954e519b93fb711370cb537c4b99b138"
+project_hash = "fecc8b42031d3682cdef3ebf554480b20303fdcc"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1046,13 +1084,20 @@ version = "1.4.1+0"
 # ╟─75dce97d-c97b-49c6-8b56-637a89a0a513
 # ╠═6fff3ed4-1edf-4f8d-ab93-a6921a81984f
 # ╠═c3433106-6356-46e4-afb7-50d60359664d
+# ╠═4e62fd49-0fed-461d-929d-e5e8e272cbc9
 # ╟─a8785d03-4bbc-4ee8-8a98-195fc504d384
 # ╠═f79174b2-ef0d-41e7-a6a0-f930982141d6
 # ╠═7add5f31-fb73-4abf-a95f-d64da32cc0b9
 # ╟─f2cbe9e1-a9fb-4fb0-93d9-ddaaf45f7570
+# ╠═a21a7d67-bb35-4f5d-982b-8d7495bfaa74
 # ╠═10d9b9aa-6839-4129-8897-c5c40770e8ac
 # ╟─cbb8932b-da00-4b4e-a7d6-049b3b3836ca
+# ╠═34cb1d15-3812-4759-aa51-76f82fd0f515
+# ╠═c9881a5f-b263-4ad8-a08d-df6ce60fca12
 # ╠═358abc7e-214e-46c1-9177-aea8118e949f
+# ╠═c0a530c6-171c-458a-99dd-66dcda5c9288
+# ╠═7549c0cb-6ec6-4ca1-9ba6-6a3229b16726
+# ╠═91e61288-6e9b-46c0-ae70-639f8147c45c
 # ╟─a90fb744-6307-4b07-b268-43d974927bcf
 # ╠═20f2a27b-0809-4be7-a438-949cb4f13a42
 # ╠═d027a4c9-868c-4ae7-9261-25ea93a1cba9
