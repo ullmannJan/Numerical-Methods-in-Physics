@@ -15,7 +15,7 @@ using LinearAlgebra
 
 # ╔═╡ 75dce97d-c97b-49c6-8b56-637a89a0a513
 md"""
-# Assignment #2
+# Assignment #2 -- Jan Ullmann
 """
 
 # ╔═╡ a8785d03-4bbc-4ee8-8a98-195fc504d384
@@ -26,8 +26,20 @@ md"""
 # ╔═╡ f79174b2-ef0d-41e7-a6a0-f930982141d6
 f1(x,y) = x*y -0.1
 
+# ╔═╡ 538ec8cf-2096-44fe-97fb-9b84b29a4777
+f1x(x,y) = y
+
+# ╔═╡ ff965df8-53da-4457-b0cd-196a7fdca9a6
+f1y(x,y) = x
+
 # ╔═╡ 7add5f31-fb73-4abf-a95f-d64da32cc0b9
 f2(x,y) = x*x + 3*y*y - 2
+
+# ╔═╡ ed43e588-3369-4018-8efd-0c45600549d4
+f2x(x,y) = 2*x
+
+# ╔═╡ 2ad9fa2b-7c87-4efc-99f6-b0c30dd6ee5c
+f2y(x,y) = 6*y
 
 # ╔═╡ f2cbe9e1-a9fb-4fb0-93d9-ddaaf45f7570
 md"""
@@ -35,13 +47,53 @@ md"""
 """
 
 # ╔═╡ a21a7d67-bb35-4f5d-982b-8d7495bfaa74
-function root_newton_gen(init, funcs::Function...; eps::Number=1e-9, iter_max::Int=200)
-	@assert length(init) == length(funcs) "initial conditions do not match number of functions"
-	return 0
+function root_newton_gen(init, f1::Function, f2::Function, Derivs::Function...; eps::Number=1e-9, iter_max::Int=200)
+	iterations = 0
+	x = init[1] + 1
+	y = init[2] + 1
+	while (abs(x - init[1]) > eps || abs(y - init[2]) > eps) && iterations < iter_max
+		iterations += 1
+		x = init[1]
+		y = init[2]
+		init[1] = x - (f1(x,y) * f2y(x,y) - f2(x,y) * f1y(x,y)) / (f1x(x,y) * f2y(x,y) - f1y(x,y) * f2x(x,y))
+		init[2] = y - (f1x(x,y) * f2(x,y) - f2x(x,y) * f1(x,y)) / (f1x(x,y) * f2y(x,y) - f1y(x,y) * f2x(x,y))
+	end
+	return init
 end
 
 # ╔═╡ 10d9b9aa-6839-4129-8897-c5c40770e8ac
-root_newton_gen([0.,2], f1, f2)
+res1 = root_newton_gen([1.,0.], f1, f2, f1x, f1y, f2x, f2y)
+
+# ╔═╡ 8ead3d92-18e2-4eae-b177-aff90186fff1
+root_newton_gen([-1.,0], f1, f2, f1x, f1y, f2x, f2y)
+
+# ╔═╡ 4477907b-fe16-4b79-899f-667c409fba60
+root_newton_gen([0.,1.], f1, f2, f1x, f1y, f2x, f2y)
+
+# ╔═╡ a2935eba-8b0e-4f9b-9b18-549869fc3110
+root_newton_gen([0,-1.], f1, f2, f1x, f1y, f2x, f2y)
+
+# ╔═╡ fb1f949e-04c9-4966-9dad-51913fd31d1c
+f1(res1...)
+
+# ╔═╡ 396a0f87-1866-44e7-b13e-4d2385bcf70d
+md"""
+#### Initial Condition Problems
+"""
+
+# ╔═╡ c1532035-2313-4c37-ac7d-306f0c0e2570
+root_newton_gen([0,0.], f1, f2, f1x, f1y, f2x, f2y)
+
+# ╔═╡ 0b5237fe-4e82-4b39-8c17-1579323e777a
+md"""
+When starting from 0,0 as initial conditions we do not get a solution. The reason for this is the formulation of the iteration
+
+$$x_{n+1} = x_n - \frac{ f_1(x,y) * \frac{\partial f_2}{\partial y}(x,y) - f_2(x,y) * \frac{\partial f_1}{\partial y}(x,y)} {\frac{\partial f_1}{\partial x}(x,y) * \frac{\partial f_2}{\partial y}(x,y) - \frac{\partial f_1}{\partial y}(x,y) * \frac{\partial f_2}{\partial x}(x,y)}$$
+
+$y_{n+1} \text{ respectively}$
+
+The denominator of this expression is $0$ for $x=y=0$. This leads to the calculation NaNs and for values close to $0$ to divergence. To avoid this we can implement checks for the nominator and denominator to not be zero. One causing slow convergence and the other one causing divergence.
+"""
 
 # ╔═╡ cbb8932b-da00-4b4e-a7d6-049b3b3836ca
 md"""
@@ -49,10 +101,10 @@ md"""
 """
 
 # ╔═╡ 34cb1d15-3812-4759-aa51-76f82fd0f515
-x(y) = 0.1/y
+x(x,y) = 0.1/y
 
 # ╔═╡ c9881a5f-b263-4ad8-a08d-df6ce60fca12
-y(x) = sqrt((2 - x*x)/3)
+y(x,y) = sqrt((2 - x*x)/3)
 
 # ╔═╡ 358abc7e-214e-46c1-9177-aea8118e949f
 function root_iter_gen(testfunc::Function, init, funcs::Function...; eps::Number=1e-9, iter_max::Int=200)
@@ -60,10 +112,9 @@ function root_iter_gen(testfunc::Function, init, funcs::Function...; eps::Number
 	iterations=0
 	
 	while norm(testfunc(init...),1) > eps && iter_max > iterations 
-		println(norm(init))
 		iterations += 1
 		for i ∈ 1:length(init)
-			init[i] = funcs[i](deleteat!(copy(init), i)...)
+			init[i] = funcs[i](init...)
 		end
 	end
 	
@@ -73,11 +124,21 @@ end
 # ╔═╡ c0a530c6-171c-458a-99dd-66dcda5c9288
 res = root_iter_gen(f1,[1.,1.], x, y, eps=1e-15)
 
+# ╔═╡ 3e50dec4-66af-46e9-852f-683172823f9d
+root_iter_gen(f1,[2.,1.], x, y, eps=1e-14)
+
 # ╔═╡ 7549c0cb-6ec6-4ca1-9ba6-6a3229b16726
 f1(res[1]...)
 
 # ╔═╡ 91e61288-6e9b-46c0-ae70-639f8147c45c
 f2(res[1]...)
+
+# ╔═╡ 2f1931ff-1c81-47c8-bb3b-b1e73f3b0dde
+md"""
+#### Criterion for Convergence
+
+$$\left|\frac{\partial F_i}{\partial x_1}\right| + \cdots + \left|\frac{\partial F_i}{\partial x_n}\right| < 1 \hspace{1cm} \forall i \in \{1, n\}$$
+"""
 
 # ╔═╡ a90fb744-6307-4b07-b268-43d974927bcf
 md"""
@@ -143,6 +204,20 @@ end
 gif(anim2, "anim2.gif", fps=2)
 end
 
+# ╔═╡ cfc37cf5-6abf-4acc-91ca-a3433139deb5
+md"""
+#### Extra Function
+"""
+
+# ╔═╡ ba70267d-30b8-4505-ba5d-8551ab7c8036
+h(z) = z^5 - 1
+
+# ╔═╡ 52ff937c-5305-489c-a7ad-8a733ffeffa5
+h_prime(z) = 5*z^4
+
+# ╔═╡ b5c7cae2-9d66-4290-8833-0a7cdac8b197
+plot_roots(h, h_prime, eps=1e-9, iter_max=200)
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -161,7 +236,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "fecc8b42031d3682cdef3ebf554480b20303fdcc"
+project_hash = "9210843e4038818dd43b550c9cf0deab48e48432"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1087,17 +1162,30 @@ version = "1.4.1+0"
 # ╠═4e62fd49-0fed-461d-929d-e5e8e272cbc9
 # ╟─a8785d03-4bbc-4ee8-8a98-195fc504d384
 # ╠═f79174b2-ef0d-41e7-a6a0-f930982141d6
+# ╠═538ec8cf-2096-44fe-97fb-9b84b29a4777
+# ╠═ff965df8-53da-4457-b0cd-196a7fdca9a6
 # ╠═7add5f31-fb73-4abf-a95f-d64da32cc0b9
+# ╠═ed43e588-3369-4018-8efd-0c45600549d4
+# ╠═2ad9fa2b-7c87-4efc-99f6-b0c30dd6ee5c
 # ╟─f2cbe9e1-a9fb-4fb0-93d9-ddaaf45f7570
 # ╠═a21a7d67-bb35-4f5d-982b-8d7495bfaa74
 # ╠═10d9b9aa-6839-4129-8897-c5c40770e8ac
+# ╠═8ead3d92-18e2-4eae-b177-aff90186fff1
+# ╠═4477907b-fe16-4b79-899f-667c409fba60
+# ╠═a2935eba-8b0e-4f9b-9b18-549869fc3110
+# ╠═fb1f949e-04c9-4966-9dad-51913fd31d1c
+# ╟─396a0f87-1866-44e7-b13e-4d2385bcf70d
+# ╠═c1532035-2313-4c37-ac7d-306f0c0e2570
+# ╟─0b5237fe-4e82-4b39-8c17-1579323e777a
 # ╟─cbb8932b-da00-4b4e-a7d6-049b3b3836ca
 # ╠═34cb1d15-3812-4759-aa51-76f82fd0f515
 # ╠═c9881a5f-b263-4ad8-a08d-df6ce60fca12
 # ╠═358abc7e-214e-46c1-9177-aea8118e949f
 # ╠═c0a530c6-171c-458a-99dd-66dcda5c9288
+# ╠═3e50dec4-66af-46e9-852f-683172823f9d
 # ╠═7549c0cb-6ec6-4ca1-9ba6-6a3229b16726
 # ╠═91e61288-6e9b-46c0-ae70-639f8147c45c
+# ╟─2f1931ff-1c81-47c8-bb3b-b1e73f3b0dde
 # ╟─a90fb744-6307-4b07-b268-43d974927bcf
 # ╠═20f2a27b-0809-4be7-a438-949cb4f13a42
 # ╠═d027a4c9-868c-4ae7-9261-25ea93a1cba9
@@ -1109,5 +1197,9 @@ version = "1.4.1+0"
 # ╠═3a7b819d-c391-41ca-85e9-853852b8ac93
 # ╠═e18153e5-490d-4db7-8e85-79b07fdd117b
 # ╠═729f249f-c15c-46f7-a577-8b3cf0323014
+# ╟─cfc37cf5-6abf-4acc-91ca-a3433139deb5
+# ╠═ba70267d-30b8-4505-ba5d-8551ab7c8036
+# ╠═52ff937c-5305-489c-a7ad-8a733ffeffa5
+# ╠═b5c7cae2-9d66-4290-8833-0a7cdac8b197
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
