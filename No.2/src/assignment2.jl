@@ -106,12 +106,18 @@ x(x,y) = 0.1/y
 # ╔═╡ c9881a5f-b263-4ad8-a08d-df6ce60fca12
 y(x,y) = sqrt((2 - x*x)/3)
 
+# ╔═╡ 0f395d21-4f03-4528-aaf8-abb17dc8d8d6
+x_2(x,y) = sqrt(2-3*y*y) 
+
+# ╔═╡ 34d1ce88-f29a-4aac-a960-590fb16a041c
+y_2(x,y) = 0.1/x
+
 # ╔═╡ 358abc7e-214e-46c1-9177-aea8118e949f
-function root_iter_gen(testfunc::Function, init, funcs::Function...; eps::Number=1e-9, iter_max::Int=200)
-	@assert length(init) == length(funcs) "initial conditions do not match number of functions"
+function root_iter_gen(testfuncs, init, funcs::Function...; eps::Number=1e-9, iter_max::Int=200)
+	@assert length(init) == length(funcs) == length(testfuncs) "initial conditions do not match number of functions"
 	iterations=0
 	
-	while norm(testfunc(init...),1) > eps && iter_max > iterations 
+	while norm(map(f -> f(init...),testfuncs),1) > eps && iter_max > iterations 
 		iterations += 1
 		for i ∈ 1:length(init)
 			init[i] = funcs[i](init...)
@@ -121,11 +127,20 @@ function root_iter_gen(testfunc::Function, init, funcs::Function...; eps::Number
 	return init, iterations
 end
 
-# ╔═╡ c0a530c6-171c-458a-99dd-66dcda5c9288
-res = root_iter_gen(f1,[1.,1.], x, y, eps=1e-15)
+# ╔═╡ 5e73080b-cbe6-4159-be26-fa1376d746f7
+res = root_iter_gen((f1,f2),[1.,1.], x, y, eps=1e-15)
+
+# ╔═╡ b2837caa-25dd-4823-9dd7-a9a4262dd42f
+root_iter_gen((f1,f2),[1.,1.], x, (a,b) -> -y(a,b), eps=1e-15)
+
+# ╔═╡ 000d25bd-a6ce-4f4b-aeb5-a7afe4246151
+root_iter_gen((f1,f2),[0.5,0.5], x_2, y_2, eps=1e-15)
+
+# ╔═╡ 3a1bc65b-bd9c-4345-bb94-06c0f7274d17
+root_iter_gen((f1,f2),[0.5,0.5], (a,b) -> -x_2(a,b), y_2, eps=1e-15)
 
 # ╔═╡ 3e50dec4-66af-46e9-852f-683172823f9d
-root_iter_gen(f1,[2.,1.], x, y, eps=1e-14)
+root_iter_gen((f1,f2),[2.,1.], x, y, eps=1e-14)
 
 # ╔═╡ 7549c0cb-6ec6-4ca1-9ba6-6a3229b16726
 f1(res[1]...)
@@ -1180,8 +1195,13 @@ version = "1.4.1+0"
 # ╟─cbb8932b-da00-4b4e-a7d6-049b3b3836ca
 # ╠═34cb1d15-3812-4759-aa51-76f82fd0f515
 # ╠═c9881a5f-b263-4ad8-a08d-df6ce60fca12
+# ╠═0f395d21-4f03-4528-aaf8-abb17dc8d8d6
+# ╠═34d1ce88-f29a-4aac-a960-590fb16a041c
 # ╠═358abc7e-214e-46c1-9177-aea8118e949f
-# ╠═c0a530c6-171c-458a-99dd-66dcda5c9288
+# ╠═5e73080b-cbe6-4159-be26-fa1376d746f7
+# ╠═b2837caa-25dd-4823-9dd7-a9a4262dd42f
+# ╠═000d25bd-a6ce-4f4b-aeb5-a7afe4246151
+# ╠═3a1bc65b-bd9c-4345-bb94-06c0f7274d17
 # ╠═3e50dec4-66af-46e9-852f-683172823f9d
 # ╠═7549c0cb-6ec6-4ca1-9ba6-6a3229b16726
 # ╠═91e61288-6e9b-46c0-ae70-639f8147c45c
