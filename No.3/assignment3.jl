@@ -4,12 +4,15 @@
 using Markdown
 using InteractiveUtils
 
-# ╔═╡ 2d076c56-3793-4c52-8563-e92426b180ac
+# ╔═╡ ab68a0f9-32bf-400a-85dd-45092730658e
 using LinearAlgebra
+
+# ╔═╡ f4bd1716-61d4-446a-8a33-40b90983af48
+using Statistics
 
 # ╔═╡ d5fbd469-1230-4de5-8a9c-e4d58409deca
 md"""
-# Assignment 3 - Matrices
+# Assignment 3 - Jan Ullmann
 
 ## Problem I.1
 """
@@ -181,10 +184,55 @@ m5 = [6 5 −5
 # ╔═╡ dd7b92ef-8cb5-42e5-8587-ea53bd69cd5d
 eigen(m5)
 
+# ╔═╡ 3159490f-d2e5-473b-81ac-8d598cdd1826
+function power_iteration(matrix::AbstractMatrix;initial_vector::AbstractVector=[1,0.5,0.5], eps::Number=1e-6, iter_max::Integer=100)
+	iteration = 0
+	v_old = matrix*initial_vector
+	v_new = matrix*v_old
+	e_val = 0
+	e_val_new = 1
+	while abs(e_val_new-e_val) > eps && iteration < iter_max
+		iteration += 1
+		v_old = v_new
+		v_new = matrix*v_new
+		e_val = e_val_new
+		e_val_new = mean(v_new./v_old)
+	end
+	return e_val_new, normalize!(v_new), iteration
+end
+
+# ╔═╡ b2f4559d-151f-4f12-89f5-328708a28726
+power_iteration(m5)
+
+# ╔═╡ d0128d19-40f3-4815-ae93-38e2bcd8bc7e
+function power_iteration_improved(matrix::AbstractMatrix;initial_vector::AbstractVector=[1,0.5,0.5], eps::Number=1e-6, iter_max::Integer=100)
+	iteration = 0
+	v_old = matrix*initial_vector
+	v_new = matrix*v_old
+	e_val_old = -1
+	e_val = 0
+	e_val_new = 1
+	while abs(e_val_new-e_val) > eps && iteration < iter_max
+		iteration += 1
+		v_old = v_new
+		v_new = matrix*v_new
+		e_val_old = e_val
+		e_val = e_val_new
+		e_val_new = mean(v_new./v_old)
+	end
+	e_val = (e_val_old * e_val_new - e_val*e_val)/(e_val_new - 2*e_val + e_val_old)
+	print(e_val)
+	return e_val, normalize!(v_new), iteration
+end
+
+# ╔═╡ 7c8b9e93-1dd5-41e4-988a-625a70cfa4be
+power_iteration_improved(m5)
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -193,7 +241,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "ac1187e548c6ab173ac57d4e72da1620216bce54"
+project_hash = "8c3efc2a8bec7327ac93e0344d9faedc429a153e"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -215,6 +263,25 @@ deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 version = "0.3.20+0"
 
+[[deps.Random]]
+deps = ["SHA", "Serialization"]
+uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[deps.SHA]]
+uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"
+
+[[deps.Serialization]]
+uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+
+[[deps.SparseArrays]]
+deps = ["LinearAlgebra", "Random"]
+uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[[deps.Statistics]]
+deps = ["LinearAlgebra", "SparseArrays"]
+uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
@@ -223,7 +290,8 @@ version = "5.1.1+0"
 
 # ╔═╡ Cell order:
 # ╟─d5fbd469-1230-4de5-8a9c-e4d58409deca
-# ╠═2d076c56-3793-4c52-8563-e92426b180ac
+# ╠═ab68a0f9-32bf-400a-85dd-45092730658e
+# ╠═f4bd1716-61d4-446a-8a33-40b90983af48
 # ╠═80b9b02e-67a9-4824-858a-de5759f6351c
 # ╠═75600936-2ae0-462a-be14-1414f7fce220
 # ╠═b9a734b1-99d7-4cb6-9bc7-e81b11c736ed
@@ -251,5 +319,9 @@ version = "5.1.1+0"
 # ╟─2a19ce6c-e767-4f4b-b3fc-0246a99365e4
 # ╠═dcba17dc-0f46-4aa3-b7c9-0162edc8e3c3
 # ╠═dd7b92ef-8cb5-42e5-8587-ea53bd69cd5d
+# ╠═3159490f-d2e5-473b-81ac-8d598cdd1826
+# ╠═b2f4559d-151f-4f12-89f5-328708a28726
+# ╠═d0128d19-40f3-4815-ae93-38e2bcd8bc7e
+# ╠═7c8b9e93-1dd5-41e4-988a-625a70cfa4be
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
