@@ -17,7 +17,7 @@ md"""
 
 # ╔═╡ 1df520d1-16f0-4a86-bedd-b7bd4ea7088b
 md"""
-## Problem I.A
+## Problem 3.I
 """
 
 # ╔═╡ 0d60eda4-99df-4dd6-8457-efc00da7df91
@@ -139,7 +139,7 @@ p25 = pade(2,5, f, f,f,f,f,f,f,f)
 
 # ╔═╡ bc018f67-6c82-416e-8c35-2b643de4854d
 function get_rational(x,a,b)
-	xa = [x^c for c = 1:size(a,1)]
+	xa = [x^c for c = 0:(size(a,1)-1)]
 	xb = [x^c for c = 1:size(b,1)]
 	if size(b,1) > 0 
 		return a'*xa/(1+b'*xb)
@@ -150,7 +150,7 @@ end
 
 # ╔═╡ 85944250-ce75-4008-a801-c92446423018
 begin
-	x = range(-1, 4, length=100)
+	x = range(-2, 4, length=100)
 	plot(x, (x->get_rational(x, p25...)).(x), gridalpha=0.4, label="P[2,5]")
 	plot!(x, (x->get_rational(x, p34...)).(x), label="P[3,4]")
 	plot!(x, (x->get_rational(x, p70...)).(x), label="P[7,0]")
@@ -159,16 +159,24 @@ end
 
 # ╔═╡ 42df2ab8-5749-45bc-841b-a765fa36124a
 begin
-	x2 = range(-1, 2, length=100)
+	x2 = range(-2, 2, length=100)
 	plot(x2, (x->get_rational(x, p25...)).(x2), gridalpha=0.4, label="P[2,5]")
 	plot!(x2, (x->get_rational(x, p34...)).(x2), label="P[3,4]")
 	plot!(x2, (x->get_rational(x, p70...)).(x2), label="P[7,0]")
 	plot!(x2, f.(x2), label="e^x")
 end
 
+# ╔═╡ 72785107-01d3-496b-ac8e-d3b89f13fe34
+begin
+	plot(x2, (x->f(x)-get_rational(x, p25...)).(x2), gridalpha=0.4, label="P[2,5]")
+	plot!(title="Error of Pade approximation to f(x) = exp(x)")
+	plot!(x2, (x->f(x)-get_rational(x, p34...)).(x2), label="P[3,4]")
+	plot!(x2, (x->f(x)-get_rational(x, p70...)).(x2), label="P[7,0]")
+end
+
 # ╔═╡ 9ae80318-cb3f-4dc1-9e1d-bbb0ca9c6e3c
 md"""
-## Problem II
+## Problem 3.II
 """
 
 # ╔═╡ e67bcfb0-fb45-4bf3-a4bd-98fc921b8845
@@ -178,8 +186,45 @@ x_k = [4,6,8,10]
 f_k = [1,3,8,20]
 
 # ╔═╡ afc0bd72-e8c1-4a4b-91fa-25f852a6318d
-function newton_ploly(x, a, f_a)
-	return 0
+function newton_poly_coeffs(x_k, f_k)
+	n = size(f_k,1)
+	@assert n > 0 "empty list"
+	coeffs = Array{Float64}(undef, n)
+	coeffs[1] = f_k[1]
+	delta_x = x_k[2:end] - x_k[1:end-1]
+	delta_f = (f_k[2:end] - f_k[1:end-1]) ./ delta_x
+	for i in 2:n
+		coeffs[i] = delta_f[1]
+		delta_f = (delta_f[2:end] - delta_f[1:end-1]) ./ (x_k[i+1:end] - x_k[1:end-i])
+	end
+	return coeffs
+end
+
+# ╔═╡ 0bb0f47f-818d-446a-a7bc-999669e1f4b5
+newton_poly_coeffs(x_k, f_k)
+
+# ╔═╡ 4bad7916-4712-4935-88da-414b43b02c25
+function newton_poly(x, x_k, f_k)
+	coeffs = newton_poly_coeffs(x_k, f_k)
+	delta_c = coeffs[2:end] - coeffs[1:end-1]
+	delta_x = x_k[2:end] .- x_k[1] 
+	n = size(coeffs, 1)
+	p = coeffs[end]
+
+	for k in n-1:-1:1
+		p = coeffs[k] + (x-x_k[k])*p
+	end
+
+	return p
+end
+
+# ╔═╡ ce23fb9f-734e-40b6-9e2d-4975309ef050
+poly(x) = 1/24 * (2*x^3 -27*x^2 +142x -240)
+
+# ╔═╡ bbfc0fa5-af5b-4127-9356-3d784921127e
+begin
+	plot((x -> poly(x)-newton_poly(x, x_k, f_k)), label="Delta P")
+	plot!(gridalpha=0.4, title="Error of newton interpolation and solution")
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1137,9 +1182,14 @@ version = "1.4.1+0"
 # ╠═bc018f67-6c82-416e-8c35-2b643de4854d
 # ╠═85944250-ce75-4008-a801-c92446423018
 # ╠═42df2ab8-5749-45bc-841b-a765fa36124a
+# ╠═72785107-01d3-496b-ac8e-d3b89f13fe34
 # ╟─9ae80318-cb3f-4dc1-9e1d-bbb0ca9c6e3c
 # ╠═e67bcfb0-fb45-4bf3-a4bd-98fc921b8845
 # ╠═605e1a4d-b756-433b-b50a-9b3e07fbc384
 # ╠═afc0bd72-e8c1-4a4b-91fa-25f852a6318d
+# ╠═0bb0f47f-818d-446a-a7bc-999669e1f4b5
+# ╠═4bad7916-4712-4935-88da-414b43b02c25
+# ╠═ce23fb9f-734e-40b6-9e2d-4975309ef050
+# ╠═bbfc0fa5-af5b-4127-9356-3d784921127e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
