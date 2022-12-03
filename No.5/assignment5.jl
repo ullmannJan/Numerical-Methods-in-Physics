@@ -148,8 +148,21 @@ end
 romberg_simpson(f, 0,1, 4000)
 
 # ╔═╡ 26b46b81-2102-4f21-a2d1-699e6f6c9813
+# not working yet
+
 function gaussian_int(func, a, b, steps)
-	return 0
+	root_0 = 0.3394810436
+	root_1 = 0.8611363116
+	A_1 = 0.6521451549
+	A_0 = 0.3478548451
+
+	x = range(a,b,length=steps)
+	h = (b-a)/(steps-1)
+	I = 0
+	for i in 1:(steps-1)
+		I += A_0*(f(root_0)+f(-root_0)) + A_1*(f(root_1)+f(-root_1))
+	end
+	return I
 end
 
 # ╔═╡ facf2feb-da9a-4014-bf21-3593a7f15deb
@@ -162,6 +175,9 @@ md"""
 
 # ╔═╡ 572c421f-a682-4e45-a466-f49834d29f9e
 f2(x, y) = x*y*y
+
+# ╔═╡ e78077e1-7510-43d0-b812-e4b5fe617dcc
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -201,5 +217,6 @@ project_hash = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 # ╠═facf2feb-da9a-4014-bf21-3593a7f15deb
 # ╟─9c96f1ed-d645-4d4e-a6fe-f65db0b4101f
 # ╠═572c421f-a682-4e45-a466-f49834d29f9e
+# ╠═e78077e1-7510-43d0-b812-e4b5fe617dcc
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
