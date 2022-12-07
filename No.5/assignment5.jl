@@ -150,17 +150,19 @@ romberg_simpson(f, 0,1, 4000)
 # ╔═╡ 26b46b81-2102-4f21-a2d1-699e6f6c9813
 # not working yet
 
-function gaussian_int(func, a, b, steps)
-	root_0 = 0.3394810436
-	root_1 = 0.8611363116
-	A_1 = 0.6521451549
-	A_0 = 0.3478548451
-
+function gaussian_int(func, a::Number, b::Number, steps::Int)
 	x = range(a,b,length=steps)
 	h = (b-a)/(steps-1)
+	
+	root_0 = 0.3394810436 *h*0.5
+	root_1 = 0.8611363116 *h*0.5
+	A_1 = 0.6521451549 *h*0.5
+	A_0 = 0.3478548451 *h*0.5
+
 	I = 0
 	for i in 1:(steps-1)
-		I += A_0*(f(root_0)+f(-root_0)) + A_1*(f(root_1)+f(-root_1))
+		mid = (x[i+1]+x[i])*0.5
+		I += A_0*(func(mid+root_0)+func(mid-root_0)) + A_1*(func(mid+root_1)+func(mid-root_1))
 	end
 	return I
 end
@@ -177,7 +179,22 @@ md"""
 f2(x, y) = x*y*y
 
 # ╔═╡ e78077e1-7510-43d0-b812-e4b5fe617dcc
+integral(func, a, b) = gaussian_int(func, a, b, Int(trunc(abs(b-a)*1000)+2))
 
+# ╔═╡ ff397ef5-9237-4f33-b2a0-a6cdda055729
+2/3
+
+# ╔═╡ b3ce2c4b-c9a5-4503-b129-61ba9726072a
+integral(y -> integral(x -> f2(x, y),0,2), 0,1)
+
+# ╔═╡ bd7e4a24-826d-4ec0-b8d0-08cfcd5cbace
+4/15
+
+# ╔═╡ a1346fd3-901c-4ef8-b4cf-7a64760bb4af
+integral(y -> integral(x -> f2(x, y),y*2,2), 0,1)
+
+# ╔═╡ ded665ff-093a-4eac-9002-8c5a2947c913
+integral(x -> integral(y -> f2(x, y),0,x*0.5), 0,2)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -218,5 +235,10 @@ project_hash = "da39a3ee5e6b4b0d3255bfef95601890afd80709"
 # ╟─9c96f1ed-d645-4d4e-a6fe-f65db0b4101f
 # ╠═572c421f-a682-4e45-a466-f49834d29f9e
 # ╠═e78077e1-7510-43d0-b812-e4b5fe617dcc
+# ╠═ff397ef5-9237-4f33-b2a0-a6cdda055729
+# ╠═b3ce2c4b-c9a5-4503-b129-61ba9726072a
+# ╠═bd7e4a24-826d-4ec0-b8d0-08cfcd5cbace
+# ╠═a1346fd3-901c-4ef8-b4cf-7a64760bb4af
+# ╠═ded665ff-093a-4eac-9002-8c5a2947c913
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
