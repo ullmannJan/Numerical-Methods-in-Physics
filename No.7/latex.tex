@@ -1,0 +1,84 @@
+## Runge Kutta 3rd order
+
+\begin{align}
+y_{n+1} &= y_n + a k_1 + b k_2 + c k_3\\
+k_1 &= hf(x_n,y_n)\\
+k_2 &= hf(x+Ah, y+Bh)\\
+k_3 &= hf(x+Ch, y+Dh)
+\end{align}
+With some approximations and $f(x_n, y_n) = f_n$, $f_{x_i} = \frac{\partial f}{\partial x_i}$ we can transform this to
+\begin{align}
+y_{n+1}&= y_n + ahf(x_n,y_n)\\
+&+ bhf(x_n + Ah, y_n + Bhf(x_n, y_n)\\
+&+ chf(x_n + Ch, y_n + Dhf(x_n + Ah, y_n+Bhf(x_n, y_n))\\
+&= y_n + ahf_n\\
+&+ bh (f_n+ f_x*Ah + f_yBh f_n)\\
+&+ chf[f_n + f_x Ch + f_yDh (f_n+f_xAh + f_y BHf_n)]\\
+&= y_n\\
+&+ h(a+b+c)f_n\\
+&+ h^2 (Abf_x + Bbf_nf_x + cCf_x + cDf_yf_n)\\
+&+ h^3 (cDAf_xf_y + cDB f_y^2f_n]\\
+\end{align}
+
+The Taylor expansion of our problem looks like this:
+
+\begin{align}
+y_{n+1} = y_n + hf_n + \frac{h^2}{2}(f_x + f_n f_y) + \frac{h^3}{6} (f_x f_y + f_y^2 f_n + \cdots)
+\end{align}
+
+This leads to the following system of equations
+
+\begin{align}
+a + b + c = 1\\
+Ab+cC = \frac{1}{2}\\
+Bb+cD = \frac{1}{2}\\
+cDA = \frac{1}{6}\\
+cDB = \frac{1}{6}\\
+\end{align}
+Which leads to $A=B$ and $C=D$.
+
+With this in mind we can find one solution of this system.
+
+\begin{align}
+a = \frac{2}{9}, b = \frac{3}{9}, c=\frac{4}{9}\\
+A = B = \frac{1}{2}, C = D = \frac{3}{4}
+\end{align}
+
+And therefore:
+\begin{align}
+y_{n+1} &= y_n + \frac{1}{9}(2 k_1 + 3 k_2 + 4 k_3)\\
+k_1 &= hf(x_n,y_n)\\
+k_2 &= hf(x+\frac{1}{2}h, y+\frac{1}{2}h)\\
+k_3 &= hf(x+\frac{3}{4}h, y+\frac{3}{4}h)
+\end{align}
+
+## y' = A*y
+
+\begin{align}
+y_{n+1} &= y_n + \frac{1}{6}(k_1 + 2 k_2 + 2 k_3+ k_4)\\
+k_1 &= hf(x_n,y_n)\\
+k_2 &= hf(x+\frac{1}{2}h, y +\frac{1}{2}k_2)\\
+k_3 &= hf(x+\frac{1}{2}h, y +\frac{1}{2}k_2)\\
+k_4 &= hf(x+h, y + k_3)
+\end{align}
+
+For $y' = Ay$ we can calculate our coefficients $k_i$
+
+\begin{align}
+k_1 &= hAy\\
+k_2 &= hA(y + \frac{1}{2}k_1)\\
+&= hA(y + \frac{1}{2}hAy)\\
+&= hAy + \frac{1}{2}h^2A^2\\
+k_3 &= hA(y + \frac{1}{2}k_2)\\
+&= hA(y + \frac{1}{2}(hA(y + \frac{1}{2}hAy)))\\
+&= hAy + \frac{1}{2}h^2A^2 y + \frac{1}{4}h^3A^3y\\
+k_4 &= hA*(y+k_3)\\
+&= hA *(y + hAy + \frac{1}{2}h^2A^2 y + \frac{1}{4}h^3A^3y)\\
+&= hAy + h^2A^2y + \frac{1}{2}h^3A^3 y + \frac{1}{4}h^4A^4y\\
+\end{align}
+And therefore:
+\begin{align}
+y_{n+1} &= y_n + \frac{1}{6}(k_1 + 2 k_2 + 2 k_3+ k_4)\\
+&= y_n + \frac{1}{6} \left[ 6hAy_n + 3 h^2 A^2 y_n + h^3A^3y_n + \frac{1}{4} h^4A^4y_n\right]\\
+&= y_n  \left(1+ hA + \frac{1}{2} h^2 A^2 + \frac{1}{6} h^3A^3 + \frac{1}{24} h^4A^4\right)
+\end{align}
