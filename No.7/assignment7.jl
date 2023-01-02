@@ -148,6 +148,50 @@ md"""
 ## 5.V
 """
 
+# ╔═╡ a0ad69dd-7191-48ed-925e-79f4e0b7e4c8
+struct Integrand{T <: Real}
+	interval::Tuple{Real,Real}
+	x::Array{T}
+	y::Array{T} 
+	f::Function
+end
+
+# ╔═╡ aaba0427-f204-46dd-b581-1cc2cda00a23
+function intg_trapezoidal(integrand::Integrand)
+    x = integrand.x
+    y = integrand.y
+    h = x[2] - x[1]
+    I = y[1] + y[end] + 2* sum(y[2:end-1])
+	dderiv = [0 0 0]
+	E = h^2*(x[end]-x[1])/12 * max(dderiv)
+    return I, E
+end
+
+# ╔═╡ 3863a92e-b3d7-4d7e-bdaa-3978e01c6aa3
+function intg_newton_cotes(integrand::Integrand)
+    x = integrand.x
+	y = integrand.y
+	h = x[2] - x[1]
+	
+	I = -y[1] -y[end] + 4*sum(y[2:2:end]) + 2*sum(y[1:2:end])
+    I = h * I / 3
+	E = y[1] + y[end] +3 * (y[2] + y[end-1] - y[3] - y[end-2]) - y[4] - y[end-3]
+	E = abs(h * E) / 90
+    return I, E
+end
+
+# ╔═╡ 5054ba6b-d4d9-4a3e-aa55-535dea9e872d
+f1(x) = exp(x) *cos(x)
+
+# ╔═╡ 0aadb15a-41f4-439d-b07f-34f079a7eab8
+f2(x) = exp(x)
+
+# ╔═╡ 832c6fc9-be27-42e2-b7c5-356883bbfa72
+f3 = x -> x<0 ? exp(2x) : x-2*cos(x)+4
+
+# ╔═╡ 6fb6f0ac-5dd1-4819-9f40-99d21e209f33
+I1 = Integrand((0, pi/2), [0],[0], f1)
+
 # ╔═╡ 224f61d7-5f9b-4e3a-b900-540df8c7b05f
 md"""
 ## 6.I
@@ -255,15 +299,200 @@ md"""
 ## 6.II
 """
 
+# ╔═╡ f961fa80-de97-4501-aca1-9cebffa17179
+function rk4(f::Function, init::Tuple{Real, Real}, h::Real, n::Int)
+
+	x = collect(range(init[1], step=h, length=n))
+	y = Array{Real}(undef, length(x))
+	y[1] = init[2]
+	
+	for i in 1:n-1
+		
+		k1 = h*f(x[i], y[i])
+		k2 = h*f(x[i]+0.5*h, y[i]+0.5*k1)
+		k3 = h*f(x[i]+0.5*h, y[i]+0.5*k2)
+		k4 = h*f(x[i]+h, y[i]+k3)
+		
+		y[i+1] = y[i] + (k1 + 2*k2 + 2*k3 + k4)/6
+
+	end
+	return x, y
+end
+
+# ╔═╡ 7f40af01-003d-4b19-9865-ae8944513666
+function euler_heun(f::Function, init::Tuple{Real, Real}, h::Real, n::Int)
+
+	x = collect(range(init[1], step=h, length=n))
+	y = Array{Real}(undef, length(x))
+	y[1] = init[2]
+	
+	for i in 1:n-1
+	
+		y[i+1] = y[i] + h*f(x[i],y[i])
+		y[i+1] = y[i] + h/2*(f(x[i],y[i]) + f(x[i+1], y[i+1]))
+
+	end
+	return x, y
+end
+
+# ╔═╡ cf98bbda-67c4-4edc-a642-61fd2ce21fa8
+function adams(f::Function, init::Tuple{Real, Real}, h::Real, n::Int)
+
+	x = collect(range(init[1], step=h, length=n))
+	y = Array{Real}(undef, length(x))
+	y[1] = init[2]
+	
+	for i in 1:n-1
+	
+		y[i+1] = y[i] + h*f(x[i],y[i])
+		y[i+1] = y[i] + h/2*(f(x[i],y[i]) + f(x[i+1], y[i+1]))
+
+	end
+	return x, y
+end
+
+# ╔═╡ 07227cad-1dba-4f0e-b2d1-78caa9597ea4
+y1(x,y) = y*cos(x+y)
+
+# ╔═╡ 6ab4eb8c-bbe4-4470-aaa3-3adfdddcd6f6
+y2(x,y) = y*sin(x*y)*cos(x+y)
+
+# ╔═╡ 3574f5bb-5be8-4203-b11e-7665d3e74bf8
+y3(x,y) = x*y - x*x
+
+# ╔═╡ 2ae74431-82d9-44ab-a3ba-ae59549346d5
+y4(x,y) = y * (3-y)
+
+# ╔═╡ e2f67311-b917-4b3e-92f5-b2e603626e9a
+y5(x,y) = y*y - x*x
+
+# ╔═╡ 83b40198-934e-4764-825f-eff440d663b9
+y6(x,y) = 1/(3*x-2*y+1) 
+
+# ╔═╡ cdeb4b5b-a289-464c-a75f-49620d52c46a
+function plot_ode(f; init=(0,1), h = 0.1, n = 300)
+	plot(euler_heun(f, init, h,n), label="heun")
+	plot!(rk4(f, init, h,n), label="rk4")
+	plot!(adams(f, init, h,n), label="adams")
+end
+
+# ╔═╡ 000a3731-9115-4bf2-8314-5363dd6cbcc0
+plot_ode(y1)
+
+# ╔═╡ fc4d896f-2064-4181-870e-4becd64a10ce
+plot_ode(y2)
+
 # ╔═╡ ad932df8-f014-4627-9289-f932623c8184
 md"""
 ## 6.III
-## 6.IV
-## 6.
 """
 
-# ╔═╡ b9ee39c6-cef8-4479-8832-2e45ba56c5eb
+# ╔═╡ 1c995af0-eafc-4ae8-857d-9a04f6f3cf7e
+function adams_multon()
+	return 0
+end
 
+# ╔═╡ 71e0c1d7-fb16-43fe-a97f-39c5605d910c
+function adams_multon_corrective()
+	return 0
+end
+
+# ╔═╡ 248e7bfb-85ff-4195-93ae-769e10731f9a
+test(x,y) = y + x*x - 2*x + sin(x)
+
+# ╔═╡ b7ad545c-604c-467f-b9bc-fb9d7c2083ba
+plot(rk4(test, (0,0.1), 0.01, 100))
+
+# ╔═╡ 21fb42a6-c85e-4222-bf21-741d226f7a2f
+md"""
+## 6.IV-1
+"""
+
+# ╔═╡ b20bd950-8514-4083-9993-d9cfdaf395af
+function rk4_nd(range::AbstractRange, funcs::Array{Function}, init::Array{T}) where {T<:Real}
+	@assert length(funcs) == length(init) "not the same length"
+	d = length(funcs)
+	n = length(range)
+	h = step(range)
+	x = collect(range)
+	sols = Array{Real, 2}(undef, length(x), d)
+	sols[1, :] = init
+	
+	for i in 1:n-1
+		for j in 1:d
+			f = funcs[j]
+			k1 = h*f(x[i], sols[i,:]...)
+			k2 = h*f(x[i]+0.5*h, (sols[i,:].+0.5*k1)...)
+			k3 = h*f(x[i]+0.5*h, (sols[i,:].+0.5*k2)...)
+			k4 = h*f(x[i]+h, (sols[i,:].+k3)...)
+			
+			sols[i+1,j] = sols[i,j] + (k1 + 2*k2 + 2*k3 + k4)/6
+		end
+	end
+	return sols
+end
+
+# ╔═╡ 4f8e45c6-f549-413e-ab7c-8361c8ec66f2
+sigma = 10
+
+# ╔═╡ 7220f56e-8c2d-4011-ab87-821a4be897d2
+R = 28
+
+# ╔═╡ c7f6327b-ff66-4e83-a220-70de3a67aa6a
+beta = 8/3
+
+# ╔═╡ f87eb401-3d2e-472b-a060-84aecc379083
+dx_dt(t,x,y,z) = sigma*(y - x)
+
+# ╔═╡ b6e322ff-8883-42ff-8513-0ec6ceddc6b5
+dy_dt(t,x,y,z) = x*(R - z) - y
+
+# ╔═╡ 232f2b50-e3f6-4ca3-9b79-76a7a24f75d8
+dz_dt(t,x,y,z) = x*y - beta*z
+
+# ╔═╡ 7166e2e1-5b28-41d8-a2aa-0a6faeff3662
+t = range(0,50,step=1e-3)
+
+# ╔═╡ 8d79af16-1b44-4d37-b1c9-cb07361f0988
+lor = rk4_nd(t, [dx_dt dy_dt dz_dt], [5 5 5])
+
+# ╔═╡ 376ed834-092d-47e0-a43b-e1b7cc8c473e
+plot3d(lor[:,1], lor[:,2], lor[:,3])
+
+# ╔═╡ b9ee39c6-cef8-4479-8832-2e45ba56c5eb
+md"""
+## 6.IV-2
+"""
+
+# ╔═╡ 2b16520e-3519-4546-bf27-d8a7789bf24c
+z1(x,y,z) = sin(y) + cos(x*z)
+
+# ╔═╡ 965a7e03-3496-4b96-81c0-f7f647980e57
+function z2(x,y,z) 
+	if x == 0
+		return z
+	end
+	return exp(-y*x) + sin(z*x)/x
+end
+
+# ╔═╡ e31b0f4d-699b-4435-9025-4076ae900e64
+x = range(-1,4, length=1000)
+
+# ╔═╡ 0ee9b9d3-cb11-4493-9042-03a98e6008ba
+sols = rk4_nd(x, [z1 z2], [2.37 -3.48])
+
+# ╔═╡ fef43e85-8721-4467-aeaf-027353092cda
+begin
+	plot(x,sols, label=["y(x)" "z(x)"])
+	xlabel!("x")
+end
+
+# ╔═╡ 0ef04b28-9aa1-4968-af01-271a00084b53
+begin
+	plot(sols[:,1], sols[:,2], legend=false)
+	xlabel!("y(x)")
+	ylabel!("z(x)")
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -280,7 +509,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "39d0d5866236472d6bc1a58c4e663ea8a2a2e057"
+project_hash = "865b7fdea41a21676bfe3364ec46c45467c41b8c"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -1231,9 +1460,49 @@ version = "1.4.1+0"
 # ╠═9ad8c04e-ff8d-4bd8-8ee5-d8adc726bc0a
 # ╠═19cd8902-625f-40a0-8a96-b323e76f7779
 # ╟─9d6febca-b8a1-4f94-bfc9-71427c5dae4f
+# ╠═a0ad69dd-7191-48ed-925e-79f4e0b7e4c8
+# ╠═aaba0427-f204-46dd-b581-1cc2cda00a23
+# ╠═3863a92e-b3d7-4d7e-bdaa-3978e01c6aa3
+# ╠═5054ba6b-d4d9-4a3e-aa55-535dea9e872d
+# ╠═0aadb15a-41f4-439d-b07f-34f079a7eab8
+# ╠═832c6fc9-be27-42e2-b7c5-356883bbfa72
+# ╠═6fb6f0ac-5dd1-4819-9f40-99d21e209f33
 # ╟─224f61d7-5f9b-4e3a-b900-540df8c7b05f
 # ╟─5497fb3c-5dee-4eae-8bab-dfb9896ee717
-# ╠═ad932df8-f014-4627-9289-f932623c8184
-# ╠═b9ee39c6-cef8-4479-8832-2e45ba56c5eb
+# ╠═f961fa80-de97-4501-aca1-9cebffa17179
+# ╠═7f40af01-003d-4b19-9865-ae8944513666
+# ╠═cf98bbda-67c4-4edc-a642-61fd2ce21fa8
+# ╠═07227cad-1dba-4f0e-b2d1-78caa9597ea4
+# ╠═6ab4eb8c-bbe4-4470-aaa3-3adfdddcd6f6
+# ╠═3574f5bb-5be8-4203-b11e-7665d3e74bf8
+# ╠═2ae74431-82d9-44ab-a3ba-ae59549346d5
+# ╠═e2f67311-b917-4b3e-92f5-b2e603626e9a
+# ╠═83b40198-934e-4764-825f-eff440d663b9
+# ╠═cdeb4b5b-a289-464c-a75f-49620d52c46a
+# ╠═000a3731-9115-4bf2-8314-5363dd6cbcc0
+# ╠═fc4d896f-2064-4181-870e-4becd64a10ce
+# ╟─ad932df8-f014-4627-9289-f932623c8184
+# ╠═1c995af0-eafc-4ae8-857d-9a04f6f3cf7e
+# ╠═71e0c1d7-fb16-43fe-a97f-39c5605d910c
+# ╠═248e7bfb-85ff-4195-93ae-769e10731f9a
+# ╠═b7ad545c-604c-467f-b9bc-fb9d7c2083ba
+# ╟─21fb42a6-c85e-4222-bf21-741d226f7a2f
+# ╠═b20bd950-8514-4083-9993-d9cfdaf395af
+# ╠═4f8e45c6-f549-413e-ab7c-8361c8ec66f2
+# ╠═7220f56e-8c2d-4011-ab87-821a4be897d2
+# ╠═c7f6327b-ff66-4e83-a220-70de3a67aa6a
+# ╠═f87eb401-3d2e-472b-a060-84aecc379083
+# ╠═b6e322ff-8883-42ff-8513-0ec6ceddc6b5
+# ╠═232f2b50-e3f6-4ca3-9b79-76a7a24f75d8
+# ╠═7166e2e1-5b28-41d8-a2aa-0a6faeff3662
+# ╠═8d79af16-1b44-4d37-b1c9-cb07361f0988
+# ╠═376ed834-092d-47e0-a43b-e1b7cc8c473e
+# ╟─b9ee39c6-cef8-4479-8832-2e45ba56c5eb
+# ╠═2b16520e-3519-4546-bf27-d8a7789bf24c
+# ╠═965a7e03-3496-4b96-81c0-f7f647980e57
+# ╠═e31b0f4d-699b-4435-9025-4076ae900e64
+# ╠═0ee9b9d3-cb11-4493-9042-03a98e6008ba
+# ╠═fef43e85-8721-4467-aeaf-027353092cda
+# ╠═0ef04b28-9aa1-4968-af01-271a00084b53
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
