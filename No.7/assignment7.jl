@@ -385,12 +385,13 @@ function adams(f::Function, init::Tuple{Real, Real}, h::Real, n::Int)
 	x = collect(range(init[1], step=h, length=n))
 	y = Array{Real}(undef, length(x))
 	y[1] = init[2]
-	
-	for i in 1:n-1
-	
-		y[i+1] = y[i] + h*f(x[i],y[i])
-		y[i+1] = y[i] + h/2*(f(x[i],y[i]) + f(x[i+1], y[i+1]))
 
+	start_x, start_y = rk4(f, init, h, 4)
+	x[1:4] = start_x
+	y[1:4] = start_y
+	
+	for i in 4:n-1
+		y[i+1] = y[i] + h/24*(55*f(x[i],y[i]) - 59*f(x[i-1],y[i-1]) +  37*f(x[i-2],y[i-2]) - 9*f(x[i-3],y[i-3])) 
 	end
 	return x, y
 end
@@ -432,13 +433,37 @@ md"""
 """
 
 # ╔═╡ 1c995af0-eafc-4ae8-857d-9a04f6f3cf7e
-function adams_multon()
-	return 0
+function adams_moulton(f::Function, init::Tuple{Real, Real}, h::Real, n::Int)
+
+	x = collect(range(init[1], step=h, length=n))
+	y = Array{Real}(undef, length(x))
+	y[1] = init[2]
+
+	start_x, start_y = rk4(f, init, h, 4)
+	x[1:4] = start_x
+	y[1:4] = start_y
+	
+	for i in 4:n-1
+		y[i+1] = y[i] + h/24*(9*f(x[i],y[i]) + 19*f(x[i-1],y[i-1]) - 5*f(x[i-2],y[i-2]) + f(x[i-3],y[i-3])) 
+	end
+	return x, y
 end
 
 # ╔═╡ 71e0c1d7-fb16-43fe-a97f-39c5605d910c
-function adams_multon_corrective()
-	return 0
+function adams_moulton_corr(f::Function, init::Tuple{Real, Real}, h::Real, n::Int)
+
+	x = collect(range(init[1], step=h, length=n))
+	y = Array{Real}(undef, length(x))
+	y[1] = init[2]
+
+	start_x, start_y = rk4(f, init, h, 4)
+	x[1:4] = start_x
+	y[1:4] = start_y
+	
+	for i in 4:n-1
+		y[i+1] = y[i] + h/24*(9*f(x[i],y[i]) + 19*f(x[i-1],y[i-1]) - 5*f(x[i-2],y[i-2]) + f(x[i-3],y[i-3])) 
+	end
+	return x, y
 end
 
 # ╔═╡ 97c2d65e-1d15-44fd-8552-4e079cb9e4a2
@@ -449,8 +474,10 @@ ana(x) = 0.6*exp(x) - x^2 - 0.5*(cos(x)+sin(x))
 
 # ╔═╡ b7ad545c-604c-467f-b9bc-fb9d7c2083ba
 begin
-	p0 = plot(rk4(func,(0,0.1), 0.01, 200))
-	plot!(p0, ana, line=(:dot, 2))
+	p0 = plot(rk4(func,(0,0.1), 0.01, 200), label="rk4")
+	plot!(p0, adams_moulton(func,(0,0.1), 0.01, 200), label="adam multon")
+	plot!(p0, adams_moulton_corr(func,(0,0.1), 0.01, 200),line=(:dash, 2), label="adam multon corr")
+	plot!(p0, ana, line=(:dash, 2), label="analyt")
 end
 
 # ╔═╡ 82ee63d3-b91c-495b-8044-10490b25d4a4
@@ -467,7 +494,7 @@ plot(rk4((t,v) -> bernoulli(t, v, 0.707, 2), (0,2), 0.0001, 15000))
 # ╔═╡ 5268d03d-5e36-4440-991c-1c737117a6d9
 begin
 	p1 = plot()
-	for w in range(0.707, 0.707+0.0001, length=10)
+	for w in range(0.707-0.0001, 0.707+0.0001, length=11)
 		plot!(p1, rk4((t,v) -> bernoulli(t, v, w, 2), (0,2), 0.001, 1500), label=f"mu {w:.4f}")
 	end
 p1
@@ -476,7 +503,7 @@ end
 # ╔═╡ 0eb59d7d-f395-43c8-98e8-0b915b3e8b0c
 begin
 	p2 = plot()
-	for mu in range(2, 1.5, length=10)
+	for mu in range(2, 1.5, length=11)
 		plot!(p2, rk4((t,v) -> bernoulli(t, v, 0.707*tan(t), mu), (0,2), 0.001, 1500), label=f"mu {mu:.3f}")
 	end
 p2
