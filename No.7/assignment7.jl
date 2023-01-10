@@ -7,6 +7,9 @@ using InteractiveUtils
 # ╔═╡ f6ae5398-89d0-42b9-ab01-cc66a183e6af
 using Plots
 
+# ╔═╡ bc511c79-dfce-456e-a844-933c9c4a3b36
+using PyFormattedStrings
+
 # ╔═╡ 52c77cee-7b92-11ed-26ad-69c10799c06c
 md"""
 # Assignment 7
@@ -18,7 +21,7 @@ md"""
 """
 
 # ╔═╡ e4e9df1f-e759-409f-a318-31ad5d41e72c
-function fill_array(arr::Array{T}, interval::Tuple{T, T}, f::Function) where {T <: Real}
+function fill_array(arr::Vector{T}, interval::Tuple{T, T}, f::Function) where {T <: Real}
 	n = size(arr)[1]
     x = range(interval[1], interval[2], length=n)
     for (i, xi) in enumerate(x)
@@ -149,10 +152,10 @@ md"""
 """
 
 # ╔═╡ a0ad69dd-7191-48ed-925e-79f4e0b7e4c8
-struct Integrand{T <: Real}
+struct Integrand
 	interval::Tuple{Real,Real}
-	x::Array{T}
-	y::Array{T} 
+	x::Array{Real}
+	y::Array{Real} 
 	f::Function
 end
 
@@ -161,9 +164,9 @@ function intg_trapezoidal(integrand::Integrand)
     x = integrand.x
     y = integrand.y
     h = x[2] - x[1]
-    I = y[1] + y[end] + 2* sum(y[2:end-1])
-	dderiv = [0 0 0]
-	E = h^2*(x[end]-x[1])/12 * max(dderiv)
+    I = h/2 * (y[1] + y[end] + 2* sum(y[2:end-1]))
+	dderiv = [0, 0, 0]
+	E = h^2*(x[end]-x[1])/12 * maximum(dderiv)
     return I, E
 end
 
@@ -180,6 +183,14 @@ function intg_newton_cotes(integrand::Integrand)
     return I, E
 end
 
+# ╔═╡ 841b3021-39ee-4869-bc3d-035f0969756b
+function fill_integrand(interval::Tuple{Real, Real}, f::Function, n::Integer) 
+	x = collect(range(interval..., n))
+	y = Vector{Real}(undef, n)
+	fill_array(y, interval, f)
+	return Integrand(interval, x, y, f)
+end
+
 # ╔═╡ 5054ba6b-d4d9-4a3e-aa55-535dea9e872d
 f1(x) = exp(x) *cos(x)
 
@@ -190,7 +201,40 @@ f2(x) = exp(x)
 f3 = x -> x<0 ? exp(2x) : x-2*cos(x)+4
 
 # ╔═╡ 6fb6f0ac-5dd1-4819-9f40-99d21e209f33
-I1 = Integrand((0, pi/2), [0],[0], f1)
+I1 = fill_integrand((0., pi/2), f1, 1000)
+
+# ╔═╡ 5dc6c3d9-c7f1-4f77-86fd-d7b8c90281bf
+I2 = fill_integrand((-1.,3.), f2, 1000)
+
+# ╔═╡ 180a98e6-a980-4253-aa9e-b52c03d53b63
+I3 = fill_integrand((-1.,1.), f3, 1000)
+
+# ╔═╡ 506c478c-d262-4995-bdd9-a8c9ff29c2c4
+intg_trapezoidal(I1)
+
+# ╔═╡ 68fc4615-e489-4dc0-889b-f96b56d88920
+begin
+	println(intg_newton_cotes(I1))
+	println(intg_trapezoidal(I1))
+end
+
+# ╔═╡ bf3287e3-f03d-4cd2-94b4-4eb85357cbca
+begin
+	println(intg_newton_cotes(I2))
+	println(intg_trapezoidal(I2))
+end
+
+# ╔═╡ 5847e6b6-90e6-4456-9f2e-221aeb3cd2c4
+begin
+	println(intg_newton_cotes(I3))
+	println(intg_trapezoidal(I3))
+end
+
+# ╔═╡ cb4c4d78-978f-4ed5-b78a-38d3f6de399a
+
+
+# ╔═╡ 07d7068b-360f-483b-81b1-960b310ae928
+
 
 # ╔═╡ 224f61d7-5f9b-4e3a-b900-540df8c7b05f
 md"""
@@ -397,11 +441,46 @@ function adams_multon_corrective()
 	return 0
 end
 
-# ╔═╡ 248e7bfb-85ff-4195-93ae-769e10731f9a
-test(x,y) = y + x*x - 2*x + sin(x)
+# ╔═╡ 97c2d65e-1d15-44fd-8552-4e079cb9e4a2
+func(x,y) = y + x*x - 2*x + sin(x)
+
+# ╔═╡ 22597cee-0d40-4c35-a872-d37715b2740e
+ana(x) = 0.6*exp(x) - x^2 - 0.5*(cos(x)+sin(x))
 
 # ╔═╡ b7ad545c-604c-467f-b9bc-fb9d7c2083ba
-plot(rk4(test, (0,0.1), 0.01, 100))
+begin
+	p0 = plot(rk4(func,(0,0.1), 0.01, 200))
+	plot!(p0, ana, line=(:dot, 2))
+end
+
+# ╔═╡ 82ee63d3-b91c-495b-8044-10490b25d4a4
+md"""
+### Application
+"""
+
+# ╔═╡ 0bd144f5-119c-4b39-8703-c79b4e06c047
+bernoulli(t, v, w, mu) = w*w*v*v*v - mu*v
+
+# ╔═╡ 18e15b63-4bdd-40a2-a7d4-0400ce8eb1d7
+plot(rk4((t,v) -> bernoulli(t, v, 0.707, 2), (0,2), 0.0001, 15000))
+
+# ╔═╡ 5268d03d-5e36-4440-991c-1c737117a6d9
+begin
+	p1 = plot()
+	for w in range(0.707, 0.707+0.0001, length=10)
+		plot!(p1, rk4((t,v) -> bernoulli(t, v, w, 2), (0,2), 0.001, 1500), label=f"mu {w:.4f}")
+	end
+p1
+end
+
+# ╔═╡ 0eb59d7d-f395-43c8-98e8-0b915b3e8b0c
+begin
+	p2 = plot()
+	for mu in range(2, 1.5, length=10)
+		plot!(p2, rk4((t,v) -> bernoulli(t, v, 0.707*tan(t), mu), (0,2), 0.001, 1500), label=f"mu {mu:.3f}")
+	end
+p2
+end
 
 # ╔═╡ 21fb42a6-c85e-4222-bf21-741d226f7a2f
 md"""
@@ -498,9 +577,11 @@ end
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PyFormattedStrings = "5f89f4a4-a228-4886-b223-c468a82ed5b9"
 
 [compat]
 Plots = "~1.36.6"
+PyFormattedStrings = "~0.1.10"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -509,7 +590,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.2"
 manifest_format = "2.0"
-project_hash = "865b7fdea41a21676bfe3364ec46c45467c41b8c"
+project_hash = "37ec85328a2e3e0bfce5e3e4b1f01b16e32cc738"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -533,7 +614,7 @@ uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.8+0"
 
 [[deps.Cairo_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "4b859a208b2397a7a623a03449e4636bdb17bcf2"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.16.1+1"
@@ -703,9 +784,9 @@ version = "0.21.0+0"
 
 [[deps.Glib_jll]]
 deps = ["Artifacts", "Gettext_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Libiconv_jll", "Libmount_jll", "PCRE2_jll", "Pkg", "Zlib_jll"]
-git-tree-sha1 = "fb83fbe02fe57f2c068013aa94bcdf6760d3a7a7"
+git-tree-sha1 = "d3b3624125c1474292d0d8ed0f65554ac37ddb23"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
-version = "2.74.0+1"
+version = "2.74.0+2"
 
 [[deps.Graphite2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -851,9 +932,9 @@ version = "1.42.0+0"
 
 [[deps.Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
+git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+1"
+version = "1.16.1+2"
 
 [[deps.Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1040,6 +1121,12 @@ version = "1.3.0"
 [[deps.Printf]]
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[[deps.PyFormattedStrings]]
+deps = ["Printf"]
+git-tree-sha1 = "427aadbcb003bd2b39c87caa5177dded65f81ddf"
+uuid = "5f89f4a4-a228-4886-b223-c468a82ed5b9"
+version = "0.1.10"
 
 [[deps.Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
@@ -1463,10 +1550,19 @@ version = "1.4.1+0"
 # ╠═a0ad69dd-7191-48ed-925e-79f4e0b7e4c8
 # ╠═aaba0427-f204-46dd-b581-1cc2cda00a23
 # ╠═3863a92e-b3d7-4d7e-bdaa-3978e01c6aa3
+# ╠═841b3021-39ee-4869-bc3d-035f0969756b
 # ╠═5054ba6b-d4d9-4a3e-aa55-535dea9e872d
 # ╠═0aadb15a-41f4-439d-b07f-34f079a7eab8
 # ╠═832c6fc9-be27-42e2-b7c5-356883bbfa72
 # ╠═6fb6f0ac-5dd1-4819-9f40-99d21e209f33
+# ╠═5dc6c3d9-c7f1-4f77-86fd-d7b8c90281bf
+# ╠═180a98e6-a980-4253-aa9e-b52c03d53b63
+# ╠═506c478c-d262-4995-bdd9-a8c9ff29c2c4
+# ╠═68fc4615-e489-4dc0-889b-f96b56d88920
+# ╠═bf3287e3-f03d-4cd2-94b4-4eb85357cbca
+# ╠═5847e6b6-90e6-4456-9f2e-221aeb3cd2c4
+# ╠═cb4c4d78-978f-4ed5-b78a-38d3f6de399a
+# ╠═07d7068b-360f-483b-81b1-960b310ae928
 # ╟─224f61d7-5f9b-4e3a-b900-540df8c7b05f
 # ╟─5497fb3c-5dee-4eae-8bab-dfb9896ee717
 # ╠═f961fa80-de97-4501-aca1-9cebffa17179
@@ -1484,8 +1580,15 @@ version = "1.4.1+0"
 # ╟─ad932df8-f014-4627-9289-f932623c8184
 # ╠═1c995af0-eafc-4ae8-857d-9a04f6f3cf7e
 # ╠═71e0c1d7-fb16-43fe-a97f-39c5605d910c
-# ╠═248e7bfb-85ff-4195-93ae-769e10731f9a
+# ╠═97c2d65e-1d15-44fd-8552-4e079cb9e4a2
+# ╠═22597cee-0d40-4c35-a872-d37715b2740e
 # ╠═b7ad545c-604c-467f-b9bc-fb9d7c2083ba
+# ╟─82ee63d3-b91c-495b-8044-10490b25d4a4
+# ╠═0bd144f5-119c-4b39-8703-c79b4e06c047
+# ╠═18e15b63-4bdd-40a2-a7d4-0400ce8eb1d7
+# ╠═bc511c79-dfce-456e-a844-933c9c4a3b36
+# ╠═5268d03d-5e36-4440-991c-1c737117a6d9
+# ╠═0eb59d7d-f395-43c8-98e8-0b915b3e8b0c
 # ╟─21fb42a6-c85e-4222-bf21-741d226f7a2f
 # ╠═b20bd950-8514-4083-9993-d9cfdaf395af
 # ╠═4f8e45c6-f549-413e-ab7c-8361c8ec66f2
