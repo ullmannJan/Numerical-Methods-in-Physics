@@ -64,6 +64,11 @@ arr
 # ╔═╡ 894e6525-d9ab-47f7-a80e-df090a5def92
 I, E = newton_cotes(f, 0., 1., 5)
 
+# ╔═╡ 5c12f20f-856b-4b80-8605-4536b66fb82f
+md"""
+This result is exact to the rounding errors. Because Newton Cotes of order 2 uses an 3rd order polynomial to interpolate between the integration points. Thus, integrating over a polynomial of order 3 will results in an exact value.
+"""
+
 # ╔═╡ de06f793-0b35-4a43-9f5f-c2a5345a83ed
 md"""
 ### 5.IV.b)
@@ -165,8 +170,8 @@ function intg_trapezoidal(integrand::Integrand)
     y = integrand.y
     h = x[2] - x[1]
     I = h/2 * (y[1] + y[end] + 2* sum(y[2:end-1]))
-	dderiv = [0, 0, 0]
-	E = h^2*(x[end]-x[1])/12 * maximum(dderiv)
+	dderiv = [1, 1, 1]
+	E = h^2*(x[end]-x[1])^2/12 * maximum(dderiv)
     return I, E
 end
 
@@ -231,10 +236,75 @@ begin
 end
 
 # ╔═╡ cb4c4d78-978f-4ed5-b78a-38d3f6de399a
+steps = 5:501
 
+# ╔═╡ c2e5a35a-2475-4bd7-8a94-2c0e0a388d36
+h = Vector{Float64}(undef, length(steps))
+
+# ╔═╡ 3bf51325-2164-42df-92b8-babd850682a3
+data_trapezoidal = Array{Float64, 2}(undef, size(steps)[1], 3)
+
+# ╔═╡ cc0ba029-25be-4640-9f46-3fb006a0d1da
+data_newton_cotes = Array{Float64, 2}(undef, size(steps)[1], 3)
 
 # ╔═╡ 07d7068b-360f-483b-81b1-960b310ae928
+for (i, n) in enumerate(steps)
+	data_newton_cotes[i, 1] = intg_newton_cotes(fill_integrand((0., pi/2), f1, n))[2]
+	data_newton_cotes[i, 2] = intg_newton_cotes(fill_integrand((-1.,3.), f2, n))[2]
+	data_newton_cotes[i, 3] = intg_newton_cotes(fill_integrand((-1.,1.), f3, n))[2]
+	data_trapezoidal[i, 1] = intg_trapezoidal(fill_integrand((0., pi/2), f1, n))[2]
+	data_trapezoidal[i, 2] = intg_trapezoidal(fill_integrand((-1.,3.), f2, n))[2]
+	data_trapezoidal[i, 3] = intg_trapezoidal(fill_integrand((-1.,1.), f3, n))[2]
+	h[i] = pi/2/(n-1)
+end
 
+# ╔═╡ 24959a99-010e-4814-b83e-cb9275e60c4b
+begin
+	p_f1 = plot(steps, log.(data_newton_cotes[:,1]), label="log(E) new-cot")
+	title!(p_f1, "f1")
+	plot!(p_f1, steps, log.(data_trapezoidal[:,1]), label="log(E) trap" )
+	plot!(p_f1, steps, log.(h), label="log(h)")
+	xlabel!("n")
+	
+	p_f1_2 = plot(log.(h),log.(data_newton_cotes[:,1]), label="new-cot")
+	plot!(p_f1_2, log.(h),log.(data_trapezoidal[:,1]), label="trap")
+	xlabel!("log(h)")
+	ylabel!("log(E)")
+
+	plot(p_f1, p_f1_2, layout=(2,1))
+end
+
+# ╔═╡ 3bf5ff18-082e-4c82-9a6f-52b51bbd9ed7
+begin
+	p_f2 = plot(steps, log.(data_newton_cotes[:,2]), label="log(E) new-cot")
+	title!(p_f2, "f2")
+	plot!(p_f2, steps, log.(data_trapezoidal[:,2]), label="log(E) trap" )
+	plot!(p_f2, steps, log.(h), label="log(h)")
+	xlabel!("n")
+	
+	p_f2_2 = plot(log.(h),log.(data_newton_cotes[:,2]), label="new-cot")
+	plot!(p_f2_2, log.(h),log.(data_trapezoidal[:,2]), label="trap")
+	xlabel!("log(h)")
+	ylabel!("log(E)")
+
+	plot(p_f2, p_f2_2, layout=(2,1))
+end
+
+# ╔═╡ 875e754e-135b-494c-85ae-85c0f8bd37da
+begin
+	p_f3 = plot(steps, log.(data_newton_cotes[:,3]), label="log(E) new-cot")
+	title!(p_f3, "f3")
+	plot!(p_f3, steps, log.(data_trapezoidal[:,3]), label="log(E) trap" )
+	plot!(p_f3, steps, log.(h), label="log(h)")
+	xlabel!("n")
+	
+	p_f3_2 = plot(log.(h),log.(data_newton_cotes[:,3]), label="new-cot")
+	plot!(p_f3_2, log.(h),log.(data_trapezoidal[:,3]), label="trap")
+	xlabel!("log(h)")
+	ylabel!("log(E)")
+
+	plot(p_f3, p_f3_2, layout=(2,1))
+end
 
 # ╔═╡ 224f61d7-5f9b-4e3a-b900-540df8c7b05f
 md"""
@@ -478,6 +548,31 @@ begin
 	plot!(p0, adams_moulton(func,(0,0.1), 0.01, 200), label="adam multon")
 	plot!(p0, adams_moulton_corr(func,(0,0.1), 0.01, 200),line=(:dash, 2), label="adam multon corr")
 	plot!(p0, ana, line=(:dash, 2), label="analyt")
+end
+
+# ╔═╡ 778a6c13-896d-40d9-b3f9-1931c2597b6f
+md"""
+# Fehler von RK4 adams-multon, adams-multon-corr
+"""
+
+# ╔═╡ 35063f09-5ca5-42cc-9a24-10aa78fc469e
+nss = 10:5000
+
+# ╔═╡ cd5002c1-82fd-4758-b715-09be2f6100b6
+errs = Array{Real}(undef, length(nss), 3)
+
+# ╔═╡ 6ae87689-2b0f-47c5-8287-263e2bbe7afe
+for (i, n) in enumerate(nss)
+	errs[i, 1] = abs.(ana(2) - rk4(func,(0,0.1), 2/n, n)[2][end])
+	errs[i, 2] = abs.(ana(2) - rk4(func,(0,0.1), 2/n, n)[2][end])
+	errs[i, 3] = abs.(ana(2) - rk4(func,(0,0.1), 2/n, n)[2][end])
+end
+
+# ╔═╡ ce073386-9ba0-4376-b30e-40857a3144ee
+begin
+	abs_err = plot()
+	plot!(abs_err, errs, label=["rk4" "adams-moulton" "adams-moulton-corr"])
+	title!(abs_err, "analytical errors")
 end
 
 # ╔═╡ 82ee63d3-b91c-495b-8044-10490b25d4a4
@@ -1555,6 +1650,7 @@ version = "1.4.1+0"
 # ╠═f3b4d0bc-8060-4805-af9e-88d53543a20b
 # ╠═25804866-5b99-463e-917e-5776eb24b40f
 # ╠═894e6525-d9ab-47f7-a80e-df090a5def92
+# ╟─5c12f20f-856b-4b80-8605-4536b66fb82f
 # ╟─de06f793-0b35-4a43-9f5f-c2a5345a83ed
 # ╠═459fc6b5-9a0e-476e-a5fe-8ca592148f78
 # ╠═baa3acdf-ca1b-4b92-9b7b-215aeafe196c
@@ -1589,7 +1685,13 @@ version = "1.4.1+0"
 # ╠═bf3287e3-f03d-4cd2-94b4-4eb85357cbca
 # ╠═5847e6b6-90e6-4456-9f2e-221aeb3cd2c4
 # ╠═cb4c4d78-978f-4ed5-b78a-38d3f6de399a
+# ╠═c2e5a35a-2475-4bd7-8a94-2c0e0a388d36
+# ╠═3bf51325-2164-42df-92b8-babd850682a3
+# ╠═cc0ba029-25be-4640-9f46-3fb006a0d1da
 # ╠═07d7068b-360f-483b-81b1-960b310ae928
+# ╠═24959a99-010e-4814-b83e-cb9275e60c4b
+# ╠═3bf5ff18-082e-4c82-9a6f-52b51bbd9ed7
+# ╠═875e754e-135b-494c-85ae-85c0f8bd37da
 # ╟─224f61d7-5f9b-4e3a-b900-540df8c7b05f
 # ╟─5497fb3c-5dee-4eae-8bab-dfb9896ee717
 # ╠═f961fa80-de97-4501-aca1-9cebffa17179
@@ -1610,6 +1712,11 @@ version = "1.4.1+0"
 # ╠═97c2d65e-1d15-44fd-8552-4e079cb9e4a2
 # ╠═22597cee-0d40-4c35-a872-d37715b2740e
 # ╠═b7ad545c-604c-467f-b9bc-fb9d7c2083ba
+# ╠═778a6c13-896d-40d9-b3f9-1931c2597b6f
+# ╠═35063f09-5ca5-42cc-9a24-10aa78fc469e
+# ╠═cd5002c1-82fd-4758-b715-09be2f6100b6
+# ╠═6ae87689-2b0f-47c5-8287-263e2bbe7afe
+# ╠═ce073386-9ba0-4376-b30e-40857a3144ee
 # ╟─82ee63d3-b91c-495b-8044-10490b25d4a4
 # ╠═0bd144f5-119c-4b39-8703-c79b4e06c047
 # ╠═18e15b63-4bdd-40a2-a7d4-0400ce8eb1d7
