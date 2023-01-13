@@ -509,6 +509,11 @@ plot_ode(y1)
 # ╔═╡ fc4d896f-2064-4181-870e-4becd64a10ce
 plot_ode(y2)
 
+# ╔═╡ 54113850-7154-4483-b2ce-b4c143abca6a
+md"""
+We can see that all methods follow the same curve. The Adams-Method starts osciallating after a while and then diverges from the correct solution
+"""
+
 # ╔═╡ ad932df8-f014-4627-9289-f932623c8184
 md"""
 ## 6.III
@@ -1716,6 +1721,7 @@ version = "1.4.1+0"
 # ╠═cdeb4b5b-a289-464c-a75f-49620d52c46a
 # ╠═000a3731-9115-4bf2-8314-5363dd6cbcc0
 # ╠═fc4d896f-2064-4181-870e-4becd64a10ce
+# ╟─54113850-7154-4483-b2ce-b4c143abca6a
 # ╟─ad932df8-f014-4627-9289-f932623c8184
 # ╠═1c995af0-eafc-4ae8-857d-9a04f6f3cf7e
 # ╠═71e0c1d7-fb16-43fe-a97f-39c5605d910c
