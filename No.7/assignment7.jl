@@ -36,8 +36,8 @@ function newton_cotes(f::Function, a::Real, b::Real, n::Int)
 	fill_array(arr, (a,b), f)
     I = -arr[1] -arr[end] + 4*sum(arr[2:2:end]) + 2*sum(arr[1:2:end])
     I = h * I / 3
-	E = arr[1] + arr[end] +3 * (arr[2] + arr[end-1] - arr[3] - arr[end-2]) - arr[4] - arr[end-3]
-	E = abs(h * E) / 90
+	E = arr[1] + arr[end] -4* (arr[2] + arr[end-1]) + 7*(arr[3] + arr[end-2]) + 8 * (sum(arr[5:2:end-4]) - sum(arr[4:2:end-3]))
+	E = abs(E) / 90
     return I, E
 end
 
@@ -170,8 +170,9 @@ function intg_trapezoidal(integrand::Integrand)
     y = integrand.y
     h = x[2] - x[1]
     I = h/2 * (y[1] + y[end] + 2* sum(y[2:end-1]))
-	dderiv = [1, 1, 1]
-	E = h^2*(x[end]-x[1])^2/12 * maximum(dderiv)
+	dy = diff(y)/h
+    ddy = diff(dy)/h
+	E = h^2*(x[end]-x[1])/12 * maximum(abs.(ddy))
     return I, E
 end
 
@@ -180,11 +181,17 @@ function intg_newton_cotes(integrand::Integrand)
     x = integrand.x
 	y = integrand.y
 	h = x[2] - x[1]
-	
-	I = -y[1] -y[end] + 4*sum(y[2:2:end]) + 2*sum(y[1:2:end])
-    I = h * I / 3
-	E = y[1] + y[end] +3 * (y[2] + y[end-1] - y[3] - y[end-2]) - y[4] - y[end-3]
-	E = abs(h * E) / 90
+	if length(x)%2 == 0
+		I = -y[1] -y[end-1] + 4*sum(y[2:2:end-1]) + 2*sum(y[1:2:end-1])
+		I = h*I/3 + h/2 * (y[end-1] + y[end])
+		E = -4*(y[1] + y[end-1]) + 7*(y[2] + y[end-2]) + 8 * (sum(y[4:2:end-4]) - sum(y[3:2:end-3])) 
+		E = abs(E) / 90 + h /12 * abs(abs(y[end]-y[end-1]) - abs(y[end]-y[end-2]/2))	
+	else
+		I = -y[1] -y[end] + 4*sum(y[2:2:end]) + 2*sum(y[1:2:end])
+    	I = h * I / 3
+		E = -4*(y[1] + y[end]) + 7*(y[2] + y[end-1]) + 8 * (sum(y[4:2:end-3]) - sum(y[3:2:end-2]))
+		E = abs(E) / 90
+	end
     return I, E
 end
 
@@ -305,6 +312,11 @@ begin
 
 	plot(p_f3, p_f3_2, layout=(2,1))
 end
+
+# ╔═╡ 6479ddfd-3669-441c-a7c1-04bc580ffd6d
+md"""
+We can see that the error of the newton cotes is heavily oscialliating. This is because of the approximation at the end when we have an even amount of points. We therefore have to approximate with another method for the last step (in our case the trapezoidal method). Otherwise the Error would be constant as is does not depend on the stepsize $h$. (Because we used an order 4 central difference scheme to approximate the forth derivative in the error)
+"""
 
 # ╔═╡ 224f61d7-5f9b-4e3a-b900-540df8c7b05f
 md"""
@@ -531,7 +543,8 @@ function adams_moulton_corr(f::Function, init::Tuple{Real, Real}, h::Real, n::In
 	y[1:4] = start_y
 	
 	for i in 4:n-1
-		y[i+1] = y[i] + h/24*(9*f(x[i],y[i]) + 19*f(x[i-1],y[i-1]) - 5*f(x[i-2],y[i-2]) + f(x[i-3],y[i-3])) 
+		y[i+1] = y[i] + h/24*(55*f(x[i],y[i]) -59*f(x[i-1],y[i-1]) - +37*f(x[i-2],y[i-2]) -9* f(x[i-3],y[i-3])) 
+		y[i+1] = y[i] + h/24*(9*f(x[i+1],y[i+1]) + 19*f(x[i],y[i]) - 5*f(x[i-1],y[i-1]) + f(x[i-2],y[i-2])) 
 	end
 	return x, y
 end
@@ -550,11 +563,6 @@ begin
 	plot!(p0, ana, line=(:dash, 2), label="analyt")
 end
 
-# ╔═╡ 778a6c13-896d-40d9-b3f9-1931c2597b6f
-md"""
-# Fehler von RK4 adams-multon, adams-multon-corr
-"""
-
 # ╔═╡ 35063f09-5ca5-42cc-9a24-10aa78fc469e
 nss = 10:5000
 
@@ -564,15 +572,16 @@ errs = Array{Real}(undef, length(nss), 3)
 # ╔═╡ 6ae87689-2b0f-47c5-8287-263e2bbe7afe
 for (i, n) in enumerate(nss)
 	errs[i, 1] = abs.(ana(2) - rk4(func,(0,0.1), 2/n, n)[2][end])
-	errs[i, 2] = abs.(ana(2) - rk4(func,(0,0.1), 2/n, n)[2][end])
-	errs[i, 3] = abs.(ana(2) - rk4(func,(0,0.1), 2/n, n)[2][end])
+	errs[i, 2] = abs.(ana(2) - adams_moulton(func,(0,0.1), 2/n, n)[2][end])
+	errs[i, 3] = abs.(ana(2) - adams_moulton_corr(func,(0,0.1), 2/n, n)[2][end])
 end
 
 # ╔═╡ ce073386-9ba0-4376-b30e-40857a3144ee
 begin
-	abs_err = plot()
+	abs_err = plot(ylims=(0, 1e-2))
 	plot!(abs_err, errs, label=["rk4" "adams-moulton" "adams-moulton-corr"])
 	title!(abs_err, "analytical errors")
+	xlabel!(abs_err,"n")
 end
 
 # ╔═╡ 82ee63d3-b91c-495b-8044-10490b25d4a4
@@ -1692,6 +1701,7 @@ version = "1.4.1+0"
 # ╠═24959a99-010e-4814-b83e-cb9275e60c4b
 # ╠═3bf5ff18-082e-4c82-9a6f-52b51bbd9ed7
 # ╠═875e754e-135b-494c-85ae-85c0f8bd37da
+# ╟─6479ddfd-3669-441c-a7c1-04bc580ffd6d
 # ╟─224f61d7-5f9b-4e3a-b900-540df8c7b05f
 # ╟─5497fb3c-5dee-4eae-8bab-dfb9896ee717
 # ╠═f961fa80-de97-4501-aca1-9cebffa17179
@@ -1712,7 +1722,6 @@ version = "1.4.1+0"
 # ╠═97c2d65e-1d15-44fd-8552-4e079cb9e4a2
 # ╠═22597cee-0d40-4c35-a872-d37715b2740e
 # ╠═b7ad545c-604c-467f-b9bc-fb9d7c2083ba
-# ╠═778a6c13-896d-40d9-b3f9-1931c2597b6f
 # ╠═35063f09-5ca5-42cc-9a24-10aa78fc469e
 # ╠═cd5002c1-82fd-4758-b715-09be2f6100b6
 # ╠═6ae87689-2b0f-47c5-8287-263e2bbe7afe
