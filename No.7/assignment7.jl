@@ -215,11 +215,20 @@ f3 = x -> x<0 ? exp(2x) : x-2*cos(x)+4
 # ╔═╡ 6fb6f0ac-5dd1-4819-9f40-99d21e209f33
 I1 = fill_integrand((0., pi/2), f1, 1000)
 
+# ╔═╡ bc9c6328-d191-4724-86d7-1b4420df6ebd
+I1_ana = 1.90523869
+
 # ╔═╡ 5dc6c3d9-c7f1-4f77-86fd-d7b8c90281bf
 I2 = fill_integrand((-1.,3.), f2, 1000)
 
+# ╔═╡ b3324aa3-112c-45c9-8285-768e59efa87f
+I2_ana = 19.717657482
+
 # ╔═╡ 180a98e6-a980-4253-aa9e-b52c03d53b63
 I3 = fill_integrand((-1.,1.), f3, 1000)
+
+# ╔═╡ 2fd7e2aa-8812-4a94-b8a4-f94d050009ff
+I3_ana = 3.24939
 
 # ╔═╡ 506c478c-d262-4995-bdd9-a8c9ff29c2c4
 intg_trapezoidal(I1)
@@ -228,25 +237,34 @@ intg_trapezoidal(I1)
 begin
 	println(intg_newton_cotes(I1))
 	println(intg_trapezoidal(I1))
+	println(I1_ana)
 end
 
 # ╔═╡ bf3287e3-f03d-4cd2-94b4-4eb85357cbca
 begin
 	println(intg_newton_cotes(I2))
 	println(intg_trapezoidal(I2))
+	println(I2_ana)
 end
 
 # ╔═╡ 5847e6b6-90e6-4456-9f2e-221aeb3cd2c4
 begin
 	println(intg_newton_cotes(I3))
 	println(intg_trapezoidal(I3))
+	println(I3_ana)
 end
 
 # ╔═╡ cb4c4d78-978f-4ed5-b78a-38d3f6de399a
 steps = 5:501
 
-# ╔═╡ c2e5a35a-2475-4bd7-8a94-2c0e0a388d36
-h = Vector{Float64}(undef, length(steps))
+# ╔═╡ 9e3ac651-938a-4f04-8025-ab46ed6387ec
+h1 = Vector{Float64}(undef, length(steps))
+
+# ╔═╡ eb427162-a9a0-45db-a1fb-cef36f667eee
+h2 = Vector{Float64}(undef, length(steps))
+
+# ╔═╡ 206a8a68-e655-41d0-9d43-809c944cf24a
+h3 = Vector{Float64}(undef, length(steps))
 
 # ╔═╡ 3bf51325-2164-42df-92b8-babd850682a3
 data_trapezoidal = Array{Float64, 2}(undef, size(steps)[1], 3)
@@ -256,25 +274,36 @@ data_newton_cotes = Array{Float64, 2}(undef, size(steps)[1], 3)
 
 # ╔═╡ 07d7068b-360f-483b-81b1-960b310ae928
 for (i, n) in enumerate(steps)
-	data_newton_cotes[i, 1] = intg_newton_cotes(fill_integrand((0., pi/2), f1, n))[2]
-	data_newton_cotes[i, 2] = intg_newton_cotes(fill_integrand((-1.,3.), f2, n))[2]
-	data_newton_cotes[i, 3] = intg_newton_cotes(fill_integrand((-1.,1.), f3, n))[2]
-	data_trapezoidal[i, 1] = intg_trapezoidal(fill_integrand((0., pi/2), f1, n))[2]
-	data_trapezoidal[i, 2] = intg_trapezoidal(fill_integrand((-1.,3.), f2, n))[2]
-	data_trapezoidal[i, 3] = intg_trapezoidal(fill_integrand((-1.,1.), f3, n))[2]
-	h[i] = pi/2/(n-1)
+	if n%2 == 1
+		data_newton_cotes[i, 1] = abs(I1_ana - intg_newton_cotes(fill_integrand((0.,pi/2), f1, n))[1])
+		data_newton_cotes[i, 2] = abs(I2_ana - intg_newton_cotes(fill_integrand((-1.,3.), f2, n))[1])
+		data_newton_cotes[i, 3] = abs(I3_ana - intg_newton_cotes(fill_integrand((-1.,1.), f3, n))[1])
+	else
+		data_newton_cotes[i, 1] = 1
+		data_newton_cotes[i, 2] = 1 
+		data_newton_cotes[i, 3] = 1 
+	end
+	data_trapezoidal[i, 1] = abs(I1_ana - intg_trapezoidal(fill_integrand((0., pi/2), f1, n))[1])
+	data_trapezoidal[i, 2] = abs(I2_ana - intg_trapezoidal(fill_integrand((-1.,3.), f2, n))[1])
+	data_trapezoidal[i, 3] = abs(I3_ana - intg_trapezoidal(fill_integrand((-1.,1.), f3, n))[1])
+	h1[i] = pi/2/(n-1)
+	h2[i] = 4/(n-1)
+	h3[i] = 2/(n-1)
 end
+
+# ╔═╡ 23ab9d6b-5438-42ca-bd2e-59a8a8029111
+data_newton_cotes
 
 # ╔═╡ 24959a99-010e-4814-b83e-cb9275e60c4b
 begin
-	p_f1 = plot(steps, log.(data_newton_cotes[:,1]), label="log(E) new-cot")
+	p_f1 = plot(steps[1:2:end], log.(data_newton_cotes[1:2:end,1]), label="log(E) new-cot")
 	title!(p_f1, "f1")
 	plot!(p_f1, steps, log.(data_trapezoidal[:,1]), label="log(E) trap" )
-	plot!(p_f1, steps, log.(h), label="log(h)")
+	plot!(p_f1, steps, log.(h1), label="log(h)")
 	xlabel!("n")
 	
-	p_f1_2 = plot(log.(h),log.(data_newton_cotes[:,1]), label="new-cot")
-	plot!(p_f1_2, log.(h),log.(data_trapezoidal[:,1]), label="trap")
+	p_f1_2 = plot(log.(h1[1:2:end]),log.(data_newton_cotes[1:2:end,1]), label="new-cot")
+	plot!(p_f1_2, log.(h1),log.(data_trapezoidal[:,1]), label="trap")
 	xlabel!("log(h)")
 	ylabel!("log(E)")
 
@@ -283,14 +312,14 @@ end
 
 # ╔═╡ 3bf5ff18-082e-4c82-9a6f-52b51bbd9ed7
 begin
-	p_f2 = plot(steps, log.(data_newton_cotes[:,2]), label="log(E) new-cot")
+	p_f2 = plot(steps[1:2:end], log.(data_newton_cotes[1:2:end,2]), label="log(E) new-cot")
 	title!(p_f2, "f2")
 	plot!(p_f2, steps, log.(data_trapezoidal[:,2]), label="log(E) trap" )
-	plot!(p_f2, steps, log.(h), label="log(h)")
+	plot!(p_f2, steps, log.(h2), label="log(h)")
 	xlabel!("n")
 	
-	p_f2_2 = plot(log.(h),log.(data_newton_cotes[:,2]), label="new-cot")
-	plot!(p_f2_2, log.(h),log.(data_trapezoidal[:,2]), label="trap")
+	p_f2_2 = plot(log.(h2[1:2:end]),log.(data_newton_cotes[1:2:end,2]), label="new-cot")
+	plot!(p_f2_2, log.(h2),log.(data_trapezoidal[:,2]), label="trap")
 	xlabel!("log(h)")
 	ylabel!("log(E)")
 
@@ -299,14 +328,14 @@ end
 
 # ╔═╡ 875e754e-135b-494c-85ae-85c0f8bd37da
 begin
-	p_f3 = plot(steps, log.(data_newton_cotes[:,3]), label="log(E) new-cot")
+	p_f3 = plot(steps[1:2:end], log.(data_newton_cotes[1:2:end,3]), label="log(E) new-cot")
 	title!(p_f3, "f3")
 	plot!(p_f3, steps, log.(data_trapezoidal[:,3]), label="log(E) trap" )
-	plot!(p_f3, steps, log.(h), label="log(h)")
+	plot!(p_f3, steps, log.(h3), label="log(h)")
 	xlabel!("n")
 	
-	p_f3_2 = plot(log.(h),log.(data_newton_cotes[:,3]), label="new-cot")
-	plot!(p_f3_2, log.(h),log.(data_trapezoidal[:,3]), label="trap")
+	p_f3_2 = plot(log.(h3[1:2:end]),log.(data_newton_cotes[1:2:end,3]), label="new-cot")
+	plot!(p_f3_2, log.(h3),log.(data_trapezoidal[:,3]), label="trap")
 	xlabel!("log(h)")
 	ylabel!("log(E)")
 
@@ -315,7 +344,7 @@ end
 
 # ╔═╡ 6479ddfd-3669-441c-a7c1-04bc580ffd6d
 md"""
-We can see that the error of the newton cotes is heavily oscialliating. This is because of the approximation at the end when we have an even amount of points. We therefore have to approximate with another method for the last step (in our case the trapezoidal method). Otherwise the Error would be constant as is does not depend on the stepsize $h$. (Because we used an order 4 central difference scheme to approximate the forth derivative in the error)
+We can see that the error of the newton-cotes scheme is consistently lower than the error of the trapezoidal. Both errors are osciallting when approximating function 3. My guess is, that this is due to the discontinuity of function f_3 at x=0. The schemes assume a smooth curve as they basically integrate over an interpolated polynomial, which doesn't make much sense for a discontinous function. Nevertheless, they almost achieve machine precision for small enough step sizes. We can also see a dip of increased accuracy in function 1 of the newton cotes scheme. After this the accuracy stays constant. My assumption is that this is because of the machine epsilon where we accidentily hit the proper solution but then get noise due to our machine precision 
 """
 
 # ╔═╡ 224f61d7-5f9b-4e3a-b900-540df8c7b05f
@@ -1692,17 +1721,23 @@ version = "1.4.1+0"
 # ╠═0aadb15a-41f4-439d-b07f-34f079a7eab8
 # ╠═832c6fc9-be27-42e2-b7c5-356883bbfa72
 # ╠═6fb6f0ac-5dd1-4819-9f40-99d21e209f33
+# ╠═bc9c6328-d191-4724-86d7-1b4420df6ebd
 # ╠═5dc6c3d9-c7f1-4f77-86fd-d7b8c90281bf
+# ╠═b3324aa3-112c-45c9-8285-768e59efa87f
 # ╠═180a98e6-a980-4253-aa9e-b52c03d53b63
+# ╠═2fd7e2aa-8812-4a94-b8a4-f94d050009ff
 # ╠═506c478c-d262-4995-bdd9-a8c9ff29c2c4
 # ╠═68fc4615-e489-4dc0-889b-f96b56d88920
 # ╠═bf3287e3-f03d-4cd2-94b4-4eb85357cbca
 # ╠═5847e6b6-90e6-4456-9f2e-221aeb3cd2c4
 # ╠═cb4c4d78-978f-4ed5-b78a-38d3f6de399a
-# ╠═c2e5a35a-2475-4bd7-8a94-2c0e0a388d36
+# ╠═9e3ac651-938a-4f04-8025-ab46ed6387ec
+# ╠═eb427162-a9a0-45db-a1fb-cef36f667eee
+# ╠═206a8a68-e655-41d0-9d43-809c944cf24a
 # ╠═3bf51325-2164-42df-92b8-babd850682a3
 # ╠═cc0ba029-25be-4640-9f46-3fb006a0d1da
 # ╠═07d7068b-360f-483b-81b1-960b310ae928
+# ╠═23ab9d6b-5438-42ca-bd2e-59a8a8029111
 # ╠═24959a99-010e-4814-b83e-cb9275e60c4b
 # ╠═3bf5ff18-082e-4c82-9a6f-52b51bbd9ed7
 # ╠═875e754e-135b-494c-85ae-85c0f8bd37da
